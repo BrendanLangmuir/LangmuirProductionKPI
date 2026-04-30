@@ -574,7 +574,7 @@
 
 // Apps Script web app URL. Required — dashboard shows a disconnected
 // state if this is empty or unreachable.
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzGCXk-chVbb-fHlJFMg9nbym-vBs00aJ_5XqU1SMPpy2u-1xY35aumEbOoMBJsPAzT/exec";
+const APPS_SCRIPT_URL = "";
 
 // Refresh cadence (minutes). 30 catches the 6am sync within ~30 min.
 const REFRESH_MINUTES = 30;
@@ -702,12 +702,31 @@ function shapeProduction(rawRows, streams, dayWindow) {
   const byDate = {};
   dayWindow.forEach(d => { byDate[d.iso] = {}; });
 
+  // Diagnostic: count how many rows we accept vs reject and why
+  const stats = { total: 0, mfgStk: 0, inWindow: 0, outOfWindow: 0 };
+  const sampleOutOfWindow = [];
+
   rawRows.forEach(row => {
+    stats.total++;
     if (row.tranType !== 'MFG-STK') return;
-    if (!byDate[row.tranDate]) return; // outside window
+    stats.mfgStk++;
+    if (!byDate.hasOwnProperty(row.tranDate)) {
+      stats.outOfWindow++;
+      if (sampleOutOfWindow.length < 3) sampleOutOfWindow.push(row.tranDate);
+      return;
+    }
+    stats.inWindow++;
     const pn = row.partNum.toUpperCase();
     byDate[row.tranDate][pn] = (byDate[row.tranDate][pn] || 0) + row.tranQty;
   });
+
+  // Helpful console output — visible in browser DevTools
+  console.log('[shapeProduction] Window:', dayWindow[0]?.iso, '→', dayWindow[dayWindow.length-1]?.iso);
+  console.log('[shapeProduction] Rows:', stats);
+  if (stats.outOfWindow > 0 && stats.inWindow === 0) {
+    console.warn('[shapeProduction] All MFG-STK rows fell OUTSIDE the window. Sample dates from data:', sampleOutOfWindow);
+    console.warn('[shapeProduction] If those dates look right but don\'t match the window, you have a date-format mismatch.');
+  }
 
   const prod = {};
   streams.forEach(stream => {
