@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Production KPI Board — Finished Goods</title>
+<title>Production KPI Board</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -24,70 +24,42 @@
     justify-content: space-between;
     min-height: 64px;
   }
-  .header-left  { display: flex; align-items: center; gap: 14px; }
-  .header-mid   { display: flex; align-items: center; justify-content: center; flex: 1; }
-  .header-right { display: flex; align-items: center; gap: 20px; padding: 0 8px; }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .header-mid  { display: flex; align-items: center; justify-content: center; flex: 1; }
+  .header-right { display: flex; align-items: center; gap: 14px; padding: 0 8px; }
   .brand-icon {
     width: 38px; height: 38px;
     background: #60a5fa;
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     font-weight: 900; font-size: 17px; color: #12151a;
-    flex-shrink: 0;
   }
-  .brand-text .top {
-    font-size: 10px; font-weight: 700;
-    color: #60a5fa;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-  }
-  .brand-text .btm {
-    font-size: 17px; font-weight: 800;
-    color: #fff;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-  }
-  .board-title {
-    font-size: 14px; font-weight: 700;
-    color: #9ca3af;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-  }
+  .brand-text .top { font-size: 10px; font-weight: 700; color: #60a5fa; letter-spacing: 0.15em; text-transform: uppercase; }
+  .brand-text .btm { font-size: 17px; font-weight: 800; color: #fff; letter-spacing: 0.06em; text-transform: uppercase; }
+  .board-title { font-size: 14px; font-weight: 700; color: #9ca3af; letter-spacing: 0.18em; text-transform: uppercase; }
   .board-title strong { color: #fff; }
   .clock { text-align: right; line-height: 1.15; }
-  .clock-time {
-    font-size: 18px; font-weight: 800;
-    color: #fff;
-    letter-spacing: 0.04em;
-  }
-  .clock-date {
-    font-size: 10px; font-weight: 600;
-    color: #6b7280;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-  }
-  .epicor-pill {
+  .clock-time { font-size: 18px; font-weight: 800; color: #fff; letter-spacing: 0.04em; }
+  .clock-date { font-size: 10px; font-weight: 600; color: #6b7280; letter-spacing: 0.12em; text-transform: uppercase; }
+  .pill {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 5px 11px;
-    background: rgba(34, 197, 94, 0.12);
-    border: 1px solid rgba(34, 197, 94, 0.35);
     border-radius: 999px;
     font-size: 10px; font-weight: 700;
-    color: #4ade80;
     letter-spacing: 0.12em;
     text-transform: uppercase;
+    border: 1px solid;
   }
-  .epicor-pill .dot {
+  .pill .dot {
     width: 6px; height: 6px;
     border-radius: 50%;
-    background: #4ade80;
-    box-shadow: 0 0 6px #4ade80;
+    box-shadow: 0 0 6px currentColor;
     animation: pulse 2s ease-in-out infinite;
   }
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-  /* ── Mock data banner ───────────────────────────────────── */
-  .mock-banner {
+  /* ── Banner ─────────────────────────────────────────────── */
+  .banner {
     background: linear-gradient(90deg, rgba(251,146,60,0.12), rgba(251,146,60,0.04));
     border-bottom: 1px solid rgba(251,146,60,0.3);
     padding: 6px 28px;
@@ -100,11 +72,10 @@
 
   /* ── Main layout ────────────────────────────────────────── */
   .main {
-    padding: 18px 22px 24px;
+    padding: 16px 22px 22px;
     max-width: 1900px;
     margin: 0 auto;
   }
-
   .section-label {
     font-size: 11px; font-weight: 700;
     color: #6b7280;
@@ -119,319 +90,291 @@
     background: linear-gradient(90deg, #2d3340 0%, transparent 100%);
   }
 
-  /* ── 2x3 line tile grid ─────────────────────────────────── */
-  .line-grid {
+  /* ── Tile grid (3x2 = 6 tiles) ──────────────────────────── */
+  .stream-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(2, 1fr);
     gap: 14px;
-    margin-bottom: 20px;
+    margin-bottom: 18px;
   }
 
-  .line-tile {
+  .tile {
     background: #232831;
     border: 1px solid #2d3340;
-    border-top: 3px solid var(--line-color);
+    border-top: 3px solid var(--c);
     border-radius: 6px;
-    padding: 14px 16px 12px;
+    padding: 12px 14px 10px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
+    min-height: 270px;
   }
 
-  /* Top: line label + status */
+  /* Tile header */
   .tile-head {
     display: flex; align-items: center; justify-content: space-between;
+    gap: 8px;
   }
-  .tile-line {
+  .tile-label {
     font-size: 13px; font-weight: 800;
-    color: var(--line-color);
-    letter-spacing: 0.18em;
+    color: var(--c);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .tile-streams-count {
+    font-size: 9px; font-weight: 700;
+    color: #6b7280;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
   }
   .tile-status {
-    padding: 3px 10px;
+    flex-shrink: 0;
+    padding: 3px 9px;
     border-radius: 999px;
     font-size: 9px; font-weight: 800;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
   }
   .status-on    { background: rgba(34,197,94,0.15);  color: #4ade80; }
   .status-near  { background: rgba(251,191,36,0.15); color: #fbbf24; }
   .status-under { background: rgba(239,68,68,0.15);  color: #f87171; }
 
-  /* Big KPI row with sparkline aside */
-  .tile-kpi-row {
-    display: flex;
+  /* KPI + sparkline layout */
+  .kpi-and-spark {
+    display: grid;
+    grid-template-columns: 1fr 1.6fr;
+    gap: 12px;
     align-items: center;
-    justify-content: space-between;
-    gap: 14px;
+    flex-shrink: 0;
   }
-  .tile-kpi-num { flex-shrink: 0; }
-  .tile-kpi-num-row {
-    display: flex; align-items: baseline; gap: 8px;
+  .kpi-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
   }
-  .tile-actual {
-    font-size: 38px; font-weight: 900;
-    color: #fff;
-    letter-spacing: -1.5px;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
+  /* Single-stream (default): one big number */
+  .kpi-line {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 6px;
   }
-  .tile-vs {
-    font-size: 12px; font-weight: 600;
-    color: #6b7280;
-    white-space: nowrap;
-  }
-  .tile-vs span { color: #9ca3af; font-weight: 700; }
-  .tile-kpi-sub {
-    font-size: 9px; font-weight: 700;
-    color: #6b7280;
+  .kpi-stream-label {
+    font-size: 9px; font-weight: 800;
+    color: var(--c);
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    margin-top: 4px;
+    grid-column: 1 / -1;
+    margin-bottom: -2px;
   }
-  .tile-spark-wrap {
-    flex: 1;
-    height: 44px;
+  .kpi-num-block {
+    display: flex; flex-direction: column;
+    align-items: flex-start;
+    line-height: 0.95;
+    min-width: 0;
+  }
+  .kpi-actual {
+    font-size: 54px; font-weight: 900;
+    color: #fff;
+    letter-spacing: -2.5px;
+    line-height: 0.9;
+    font-variant-numeric: tabular-nums;
+  }
+  /* When stacked (multi-stream), shrink each number a bit so two fit */
+  .kpi-actual-multi {
+    font-size: 32px;
+    letter-spacing: -1.5px;
+  }
+  .kpi-vs {
+    font-size: 10px; font-weight: 600;
+    color: #6b7280;
+    margin-top: 3px;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  .kpi-vs span { color: #fff; font-weight: 800; font-size: 12px; }
+  .kpi-status-block {
+    display: flex; flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
+  }
+  .kpi-excl {
+    font-size: 8px; font-weight: 700;
+    color: #fb923c;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  /* Subtle separator between stacked streams */
+  .kpi-line-multi + .kpi-line-multi {
+    border-top: 1px solid rgba(45,51,64,0.6);
+    padding-top: 6px;
+    margin-top: 0;
+  }
+
+  .spark-wrap {
+    height: 80px;
     position: relative;
     min-width: 0;
   }
 
-  /* Inventory sub-section */
+  /* Multi-stream tiles need a bit more height to fit both KPIs */
+  .tile-multi { min-height: 320px; }
+  .tile-multi .spark-wrap { height: 110px; }
+
+  /* Inventory: scroll, but only ~2 rows visible */
   .tile-inv {
     border-top: 1px solid #2d3340;
-    padding-top: 10px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
+    padding-top: 6px;
+    margin-top: 2px;
+    flex: 1; min-height: 0;
+    display: flex; flex-direction: column;
   }
   .tile-inv-head {
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
   .tile-inv-label {
-    font-size: 9px; font-weight: 800;
+    font-size: 8px; font-weight: 800;
     color: #6b7280;
     letter-spacing: 0.16em;
     text-transform: uppercase;
   }
   .tile-inv-total {
-    font-size: 10px; font-weight: 700;
+    font-size: 9px; font-weight: 700;
     color: #9ca3af;
-    letter-spacing: 0.06em;
   }
-  .tile-inv-total b {
-    color: #fff;
-    font-size: 12px;
-    font-weight: 800;
-    margin-right: 4px;
-  }
+  .tile-inv-total b { color: #fff; font-size: 11px; font-weight: 800; margin-right: 3px; }
 
-  .tile-inv-list {
-    display: flex;
-    flex-direction: column;
-  }
-  .tile-inv-scroll {
-    max-height: 240px;
+  .inv-list {
+    max-height: 78px;          /* ~2 rows visible */
     overflow-y: auto;
     overflow-x: hidden;
     padding-right: 4px;
     scrollbar-width: thin;
     scrollbar-color: #2d3340 transparent;
   }
-  .tile-inv-scroll::-webkit-scrollbar { width: 6px; }
-  .tile-inv-scroll::-webkit-scrollbar-track { background: transparent; }
-  .tile-inv-scroll::-webkit-scrollbar-thumb {
-    background: #2d3340;
-    border-radius: 3px;
-  }
-  .tile-inv-scroll::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+  .inv-list::-webkit-scrollbar { width: 5px; }
+  .inv-list::-webkit-scrollbar-track { background: transparent; }
+  .inv-list::-webkit-scrollbar-thumb { background: #2d3340; border-radius: 3px; }
+
   .inv-row {
     display: grid;
-    grid-template-columns: 1fr auto auto;
-    gap: 10px;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
     align-items: center;
-    padding: 5px 0;
-    font-size: 12px;
+    padding: 4px 0;
   }
   .inv-row + .inv-row { border-top: 1px solid rgba(45,51,64,0.5); }
   .inv-sku {
     font-family: 'SF Mono', 'Consolas', monospace;
-    font-size: 11.5px;
+    font-size: 10.5px;
     font-weight: 600;
     color: #fff;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    display: flex; align-items: center; gap: 6px;
   }
-  .inv-sku small {
-    display: block;
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    font-size: 10px;
-    font-weight: 500;
-    color: #6b7280;
-    margin-top: 1px;
-    letter-spacing: 0.02em;
+  .inv-stream-dot {
+    flex-shrink: 0;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    display: inline-block;
   }
   .inv-qty {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 800;
     color: #fff;
     font-variant-numeric: tabular-nums;
     text-align: right;
-    min-width: 32px;
+    min-width: 28px;
   }
   .inv-qty.low  { color: #f87171; }
   .inv-qty.warn { color: #fbbf24; }
-  .inv-dos {
-    font-size: 10px;
-    font-weight: 700;
-    color: #6b7280;
-    letter-spacing: 0.06em;
-    min-width: 52px;
-    text-align: right;
-    white-space: nowrap;
-  }
-  .inv-dos.low  { color: #f87171; }
-  .inv-dos.warn { color: #fbbf24; }
 
-  /* line color tokens */
-  .line-apollo { --line-color: #ef4444; }
-  .line-titan  { --line-color: #fb923c; }
-  .line-xr     { --line-color: #a78bfa; }
-  .line-mr1    { --line-color: #fbbf24; }
-  .line-xfpro  { --line-color: #38bdf8; }
-  .line-vulcan { --line-color: #22c55e; }
-
-  /* ── Trend chart panel ──────────────────────────────────── */
+  /* ── Trend panel ────────────────────────────────────────── */
   .trend-panel {
     background: #232831;
     border: 1px solid #2d3340;
     border-radius: 6px;
-    padding: 18px 20px 14px;
+    padding: 16px 18px 12px;
   }
   .trend-head {
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 14px;
+    margin-bottom: 12px;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 10px;
   }
-  .trend-title {
-    font-size: 14px; font-weight: 800;
-    color: #fff;
-    letter-spacing: 0.04em;
-  }
-  .trend-sub {
-    font-size: 11px; font-weight: 600;
-    color: #6b7280;
-    letter-spacing: 0.06em;
-    margin-top: 2px;
-  }
-  .line-toggles {
-    display: flex; gap: 6px; flex-wrap: wrap;
-  }
-  .line-toggle {
-    padding: 6px 12px;
+  .trend-title { font-size: 14px; font-weight: 800; color: #fff; letter-spacing: 0.04em; }
+  .trend-sub { font-size: 11px; font-weight: 600; color: #6b7280; margin-top: 2px; }
+  .trend-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .stream-toggles { display: flex; gap: 5px; flex-wrap: wrap; }
+  .toggle {
+    padding: 5px 10px;
     background: #1a1e24;
     border: 1px solid #2d3340;
     border-radius: 4px;
-    font-size: 10px; font-weight: 800;
+    font-size: 9px; font-weight: 800;
     color: #9ca3af;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     cursor: pointer;
     transition: all 0.15s ease;
-    display: flex; align-items: center; gap: 6px;
+    display: flex; align-items: center; gap: 5px;
   }
-  .line-toggle:hover { color: #fff; }
-  .line-toggle .swatch {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--line-color);
-  }
-  .line-toggle.active {
-    border-color: var(--line-color);
-    color: #fff;
-    background: rgba(255,255,255,0.04);
-  }
-  .line-toggle.muted { opacity: 0.4; }
-  .line-toggle.muted .swatch { background: #4b5563; }
-  .chart-wrap {
-    position: relative;
-    height: 320px;
-  }
+  .toggle:hover { color: #fff; }
+  .toggle .swatch { width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
+  .toggle.active { border-color: var(--c); color: #fff; background: rgba(255,255,255,0.04); }
+  .toggle.muted { opacity: 0.4; }
+  .toggle.muted .swatch { background: #4b5563; }
+  .chart-wrap { position: relative; height: 320px; }
 
   /* ── Stockout modal ─────────────────────────────────────── */
-  .stockout-modal {
+  .modal {
     display: none;
-    position: fixed;
-    inset: 0;
+    position: fixed; inset: 0;
     background: rgba(0,0,0,0.6);
     backdrop-filter: blur(4px);
     z-index: 100;
-    align-items: center;
-    justify-content: center;
+    align-items: center; justify-content: center;
     padding: 20px;
   }
-  .stockout-modal.open { display: flex; }
-  .stockout-card {
+  .modal.open { display: flex; }
+  .modal-card {
     background: #232831;
     border: 1px solid #2d3340;
     border-radius: 8px;
-    width: 100%;
-    max-width: 900px;
+    width: 100%; max-width: 950px;
     max-height: 90vh;
     overflow: auto;
     padding: 22px 24px;
   }
-  .stockout-head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 20px;
-    margin-bottom: 18px;
-    padding-bottom: 14px;
-    border-bottom: 1px solid #2d3340;
+  .modal-head {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 20px; margin-bottom: 18px;
+    padding-bottom: 14px; border-bottom: 1px solid #2d3340;
   }
-  .stockout-title {
-    font-size: 16px; font-weight: 800;
-    color: #fff;
-    letter-spacing: 0.04em;
+  .modal-title { font-size: 16px; font-weight: 800; color: #fff; }
+  .modal-sub { font-size: 12px; font-weight: 500; color: #9ca3af; margin-top: 4px; line-height: 1.4; }
+  .modal-close {
+    background: transparent; border: 1px solid #2d3340;
+    color: #9ca3af; width: 32px; height: 32px; border-radius: 6px;
+    font-size: 20px; cursor: pointer; line-height: 1;
   }
-  .stockout-sub {
-    font-size: 12px; font-weight: 500;
-    color: #9ca3af;
-    margin-top: 4px;
-    line-height: 1.4;
-  }
-  .stockout-close {
-    background: transparent;
-    border: 1px solid #2d3340;
-    color: #9ca3af;
-    width: 32px; height: 32px;
-    border-radius: 6px;
-    font-size: 20px;
-    cursor: pointer;
-    line-height: 1;
-  }
-  .stockout-close:hover { color: #fff; border-color: #fb923c; }
-  .stockout-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-  .stockout-line-row {
+  .modal-close:hover { color: #fff; border-color: #fb923c; }
+
+  .stockout-row {
     display: grid;
-    grid-template-columns: 130px 1fr;
+    grid-template-columns: 140px 1fr;
     gap: 14px;
     align-items: center;
+    margin-bottom: 14px;
   }
-  .stockout-line-label {
-    font-size: 11px;
-    font-weight: 800;
-    color: var(--line-color);
-    letter-spacing: 0.16em;
+  .stockout-label {
+    font-size: 11px; font-weight: 800;
+    color: var(--c);
+    letter-spacing: 0.14em;
     text-transform: uppercase;
   }
   .stockout-days {
@@ -439,7 +382,7 @@
     grid-template-columns: repeat(20, 1fr);
     gap: 3px;
   }
-  .stockout-day {
+  .day-cell {
     aspect-ratio: 1;
     background: #1a1e24;
     border: 1px solid #2d3340;
@@ -448,66 +391,64 @@
     font-size: 9px;
     font-weight: 700;
     color: #6b7280;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     transition: all 0.1s;
     padding: 0;
-    line-height: 1;
   }
-  .stockout-day:hover {
-    border-color: #fb923c;
-    color: #fff;
-  }
-  .stockout-day.excluded {
+  .day-cell:hover { border-color: #fb923c; color: #fff; }
+  .day-cell.excluded {
     background: rgba(251,146,60,0.2);
     border-color: #fb923c;
     color: #fb923c;
   }
-  .stockout-day.excluded::before { content: '⚠'; font-size: 11px; }
-  .stockout-day.excluded > span { display: none; }
-  .stockout-foot {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 18px;
-    padding-top: 14px;
-    border-top: 1px solid #2d3340;
+  .day-cell.excluded::before { content: '⚠'; font-size: 11px; }
+  .day-cell.excluded > span { display: none; }
+  .modal-foot {
+    display: flex; justify-content: space-between;
+    gap: 10px; margin-top: 18px;
+    padding-top: 14px; border-top: 1px solid #2d3340;
   }
-  .stockout-btn {
-    padding: 8px 18px;
+  .modal-foot-right { display: flex; gap: 10px; }
+  .btn {
+    padding: 8px 16px;
     background: transparent;
     border: 1px solid #2d3340;
     color: #9ca3af;
     border-radius: 4px;
-    font-size: 11px;
-    font-weight: 700;
+    font-size: 11px; font-weight: 700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     cursor: pointer;
     transition: all 0.15s;
   }
-  .stockout-btn:hover { color: #fff; border-color: #6b7280; }
-  .stockout-btn.primary {
-    background: #60a5fa;
-    border-color: #60a5fa;
-    color: #12151a;
+  .btn:hover { color: #fff; border-color: #6b7280; }
+  .btn.primary { background: #60a5fa; border-color: #60a5fa; color: #12151a; }
+  .btn.primary:hover { background: #93c5fd; }
+  .btn.warn { color: #fb923c; border-color: rgba(251,146,60,0.4); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .save-status {
+    font-size: 10px; font-weight: 700;
+    color: #6b7280;
+    letter-spacing: 0.08em;
+    align-self: center;
   }
-  .stockout-btn.primary:hover { background: #93c5fd; }
+  .save-status.ok { color: #4ade80; }
+  .save-status.err { color: #f87171; }
 
   /* responsive squish */
   @media (max-width: 1500px) {
-    .line-grid { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, 1fr); }
+    .stream-grid { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, 1fr); }
   }
-  @media (max-width: 900px) {
-    .line-grid { grid-template-columns: 1fr; grid-template-rows: auto; }
+  @media (max-width: 800px) {
+    .stream-grid { grid-template-columns: 1fr; grid-template-rows: auto; }
     .header-mid { display: none; }
+    .stockout-days { grid-template-columns: repeat(10, 1fr); }
   }
 </style>
 </head>
 <body>
 
-<!-- ── HEADER ─────────────────────────────────────────────── -->
 <div class="header">
   <div class="header-left">
     <div class="brand-icon">L</div>
@@ -517,11 +458,10 @@
     </div>
   </div>
   <div class="header-mid">
-    <div class="board-title">Finished Goods · <strong>All Lines</strong></div>
+    <div class="board-title">Finished Goods · <strong>All Streams</strong></div>
   </div>
   <div class="header-right">
-    <div id="targetsBadge" class="epicor-pill" style="border-color:rgba(251,146,60,0.35);background:rgba(251,146,60,0.12);color:#fb923c;">Loading…</div>
-    <div class="epicor-pill"><span class="dot"></span>Epicor Sync</div>
+    <div id="dataPill" class="pill" style="border-color:rgba(251,146,60,0.35);background:rgba(251,146,60,0.12);color:#fb923c;">Loading…</div>
     <div class="clock">
       <div class="clock-time" id="clockTime">—</div>
       <div class="clock-date" id="clockDate">—</div>
@@ -529,89 +469,156 @@
   </div>
 </div>
 
-<div class="mock-banner">
-  v0.1 · Production board
-</div>
+<div class="banner" id="banner">v0.3 — 6 tiles, dual-stream KPIs · paste APPS_SCRIPT_URL into the script to switch from demo to live data</div>
 
-<!-- ── MAIN ───────────────────────────────────────────────── -->
 <div class="main">
-
-  <div class="section-label">By Line · 10-Day Moving Average + On-Hand Inventory</div>
-  <div class="line-grid" id="lineGrid"></div>
+  <div class="section-label">10-Day Moving Average · By Line</div>
+  <div class="stream-grid" id="streamGrid"></div>
 
   <div class="section-label">Daily Production Trend · 20 Working Days</div>
   <div class="trend-panel">
     <div class="trend-head">
       <div>
         <div class="trend-title">Daily Output vs Target</div>
-        <div class="trend-sub">Solid = actual · dashed = target · <span style="color:#60a5fa;">shaded region = ${10}-day MA window</span> · ◇ = excluded stockout day</div>
+        <div class="trend-sub">Solid = actual · dashed = target · <span style="color:#60a5fa;">shaded = MA window</span> · ◇ = excluded day</div>
       </div>
-      <div style="display:flex;gap:10px;align-items:center;">
-        <button id="manageStockoutsBtn" class="line-toggle" style="border-color:#fb923c;color:#fb923c;">
-          ⚠ Manage Stockouts
-        </button>
-        <div class="line-toggles" id="lineToggles"></div>
+      <div class="trend-actions">
+        <button id="manageBtn" class="toggle" style="border-color:#fb923c;color:#fb923c;">⚠ Manage Stockouts</button>
+        <div class="stream-toggles" id="streamToggles"></div>
       </div>
     </div>
-    <div class="chart-wrap">
-      <canvas id="trendChart"></canvas>
-    </div>
+    <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
   </div>
+</div>
 
-  <!-- Stockout management modal -->
-  <div id="stockoutModal" class="stockout-modal">
-    <div class="stockout-card">
-      <div class="stockout-head">
-        <div>
-          <div class="stockout-title">Manage Excluded Days</div>
-          <div class="stockout-sub">Click any day to toggle stockout status. Excluded days don't count toward the moving average.</div>
+<!-- Stockout management modal -->
+<div id="stockoutModal" class="modal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title">Manage Excluded Days</div>
+        <div class="modal-sub">
+          Click any day to toggle stockout status. Excluded days don't count toward the moving average.
+          Stored on the server — visible to anyone viewing this dashboard.
         </div>
-        <button id="closeStockoutsBtn" class="stockout-close">×</button>
       </div>
-      <div id="stockoutGrid" class="stockout-grid"></div>
-      <div class="stockout-foot">
-        <button id="clearAllStockoutsBtn" class="stockout-btn">Clear all</button>
-        <button id="saveStockoutsBtn" class="stockout-btn primary">Done</button>
+      <button id="closeBtn" class="modal-close">×</button>
+    </div>
+    <div id="stockoutGrid"></div>
+    <div class="modal-foot">
+      <button id="clearBtn" class="btn warn">Clear all</button>
+      <div class="modal-foot-right">
+        <div id="saveStatus" class="save-status">unsaved changes save when you click Done</div>
+        <button id="doneBtn" class="btn primary">Done</button>
       </div>
     </div>
   </div>
-
 </div>
 
 <script>
 /* ────────────────────────────────────────────────────────── */
-/*  Mock data — replace these blocks with Epicor feeds later  */
+/*  CONFIG                                                    */
 /* ────────────────────────────────────────────────────────── */
 
-// ─── BACKEND CONFIG ────────────────────────────────────────────
-//
-// Apps Script web app URL. Deploy your script (separate project from
-// inventory script), copy the deployment URL, paste here.
-//
-// The dashboard hits this URL on load to fetch:
-//   - production : raw MFG-STK transaction rows from Epicor (last 30 days)
-//   - inventory  : on-hand qty per part from Epicor
-//   - targets    : line config from the Targets tab in the Sheet
-//
-// If empty, dashboard runs with hardcoded fallback data (demo mode).
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzGCXk-chVbb-fHlJFMg9nbym-vBs00aJ_5XqU1SMPpy2u-1xY35aumEbOoMBJsPAzT/exec"; // ← paste deployment URL here
+// Apps Script web app URL. Empty = demo mode with fallback data.
+const APPS_SCRIPT_URL = "";
 
-// How often to re-fetch from the Apps Script. The data refreshes once
-// daily at 6am, so anything more frequent than ~15 min is wasted work.
-// 30 minutes = the dashboard catches the morning sync within half an hour
-// of it running, plus picks up any manual Target edits relatively quickly.
+// Refresh cadence (minutes). 30 catches the 6am sync within ~30 min.
 const REFRESH_MINUTES = 30;
 
-// Whether to anchor the working-day window to a fixed date (true, for the
-// demo with snapshot data) or use today (false, for live deployment).
-// When wired to the Apps Script, set this to false.
-const USE_FIXED_ANCHOR_DATE = false;
-const FIXED_ANCHOR = new Date(2026, 3, 28); // April 28, 2026 — the data we have
+// MA window size, in working days
+const MA_WINDOW = 10;
 
-// ─── DATA LOADING ──────────────────────────────────────────────
+// Anchor the 20-day window to a fixed date (true = demo with snapshot data)
+// or use today (false = live deployment).
+const USE_FIXED_ANCHOR_DATE = true;
+const FIXED_ANCHOR = new Date(2026, 3, 28); // April 28, 2026
 
-// Fetch everything from the Apps Script. Returns null if the URL is
-// empty or the fetch fails — caller falls back to hardcoded data.
+/* ────────────────────────────────────────────────────────── */
+/*  FALLBACK DATA (used when APPS_SCRIPT_URL is empty)        */
+/* ────────────────────────────────────────────────────────── */
+
+// Streams: each row = one measurable production target.
+// Streams with the same `tileKey` render together as one tile.
+let STREAMS = [
+  { key:'apollo', tileKey:'apollo', label:'Apollo',       color:'#ef4444', target:1.0, trackedSkus:['APOLLO'],          inventorySkus:['APOLLO','APOLLO-CAMERA','APOLLO-FUME-KIT','APOLLO-GAS-KIT'] },
+  { key:'titan',  tileKey:'titan',  label:'Titan',        color:'#fb923c', target:4.0, trackedSkus:['TITAN'],           inventorySkus:['TITAN','TITAN-BACKGUAGE','TITAN-ARMS','TITAN-STAND'] },
+  { key:'xr',     tileKey:'xr',     label:'XR',           color:'#a78bfa', target:4.0, trackedSkus:['XRCRATE-1','XRCRATE-2'], inventorySkus:['XRCRATE-1','XRCRATE-2'] },
+  { key:'xr-asm', tileKey:'xr',     label:'XR Asm',       color:'#c4b5fd', target:0.6, trackedSkus:['XR-ASSEMBLY'],     inventorySkus:['XR-ASSEMBLY','XR-REMOTE-ESTOP-KIT'] },
+  { key:'mr1',    tileKey:'mr1',    label:'MR1',          color:'#fbbf24', target:2.5, trackedSkus:['MR1'],             inventorySkus:['MR1','MR1-ASSEMBLY','MR1-ENCLOSURE','MR1-CONTROL-KIT'] },
+  { key:'xf',     tileKey:'xf-pro', label:'Crossfire',    color:'#38bdf8', target:1.0, trackedSkus:['CROSSFIRE'],       inventorySkus:['CROSSFIRE','SLATS','WATERTABLE','XLKIT'] },
+  { key:'xf-pro', tileKey:'xf-pro', label:'XF/PRO',       color:'#06b6d4', target:1.0, trackedSkus:['CROSSFIREPRO-BOX1','CROSSFIREPRO-BOX2','CROSSFIREPRO-BOX3'], inventorySkus:['CROSSFIREPRO-BOX1','CROSSFIREPRO-BOX2','CROSSFIREPRO-BOX3','ATHC-PRO','MACHINETORCH-MOUNT'] },
+  { key:'vulcan', tileKey:'vulcan', label:'Vulcan',       color:'#22c55e', target:1.0, trackedSkus:['VULCAN'],          inventorySkus:['VULCAN','VULCAN-ASSEMBLY','VULCAN-CART','VULCAN-LEGS'] },
+];
+
+// Tile metadata. Lazily derived from STREAMS — order/labels/colors come
+// from the first stream encountered for each tileKey, but we override
+// the label for grouped tiles so the header reads cleanly.
+let TILES = []; // [{ key, label, color, streams: [stream, ...] }]
+const TILE_LABELS = {
+  'xr':     'XR',         // XR + XR Asm
+  'xf-pro': 'XF / PRO',   // Crossfire + XF/PRO
+};
+
+function rebuildTiles() {
+  const map = new Map();
+  STREAMS.forEach(s => {
+    const key = s.tileKey || s.key;
+    if (!map.has(key)) {
+      map.set(key, {
+        key: key,
+        label: TILE_LABELS[key] || s.label,
+        color: s.color,            // primary color = first stream's color
+        streams: [],
+      });
+    }
+    map.get(key).streams.push(s);
+  });
+  TILES = Array.from(map.values());
+}
+
+// Per-stream production arrays (20 working days, oldest first).
+// Keyed by stream.key. Values are AVERAGE of trackedSkus' qty for that day.
+let PROD = {};
+
+// Per-stream inventory arrays. Keyed by stream.key.
+// Each array is the SKUs in stream.inventorySkus order, with current qty.
+let INVENTORY = {};
+
+// Per-stream excluded day indexes (0-19). Keyed by stream.key.
+// Loaded from server on init, written back via doPost on Done.
+let STOCKOUTS = {};
+
+// State trackers
+let TARGETS_SOURCE = 'fallback';
+let LAST_SYNC = null;
+let DAY_WINDOW = [];   // [{ iso, label, date }, ...]
+const visible = new Set();
+let trendChart = null;
+const sparkCharts = {};
+
+/* ────────────────────────────────────────────────────────── */
+/*  DAY WINDOW                                                */
+/* ────────────────────────────────────────────────────────── */
+
+function buildDayWindow(n) {
+  const out = [];
+  const d = USE_FIXED_ANCHOR_DATE ? new Date(FIXED_ANCHOR) : new Date();
+  while (out.length < n) {
+    const day = d.getDay();
+    if (day !== 0 && day !== 6) {
+      const iso = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      out.unshift({ iso, label: `${d.getMonth()+1}/${d.getDate()}`, date: new Date(d) });
+    }
+    d.setDate(d.getDate() - 1);
+  }
+  return out;
+}
+
+/* ────────────────────────────────────────────────────────── */
+/*  DATA LOADING                                              */
+/* ────────────────────────────────────────────────────────── */
+
 async function fetchFromAppsScript() {
   if (!APPS_SCRIPT_URL) return null;
   try {
@@ -621,255 +628,121 @@ async function fetchFromAppsScript() {
     if (!json.success) throw new Error(json.error || 'unknown error');
     return json;
   } catch (e) {
-    console.warn('Apps Script fetch failed, using fallback data:', e.message);
+    console.warn('Apps Script fetch failed:', e.message);
     return null;
   }
 }
 
-// Convert raw production transaction rows into the per-line 20-working-day
-// arrays the dashboard renders. Sums all MFG-STK qty per (part, date).
-function shapeProductionData(rawRows, lines, dayWindow) {
-  // Build (lineKey → main part name) lookup
-  const partToLine = {};
-  lines.forEach(l => { if (l.part) partToLine[l.part.toUpperCase()] = l.key; });
+async function postStockouts(payload) {
+  if (!APPS_SCRIPT_URL) return { success: false, error: 'No backend configured (demo mode)' };
+  try {
+    const resp = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      // Apps Script web apps don't support custom CORS headers; sending
+      // text/plain avoids the preflight that would otherwise be blocked.
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'setStockouts', stockouts: payload }),
+      redirect: 'follow',
+    });
+    const json = await resp.json();
+    return json;
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+}
 
-  // Index of each ISO-yyyy-mm-dd in the dayWindow array
-  const dateToIdx = {};
-  dayWindow.forEach((d, i) => { dateToIdx[d.iso] = i; });
+/* ────────────────────────────────────────────────────────── */
+/*  DATA SHAPING                                              */
+/* ────────────────────────────────────────────────────────── */
 
-  // Initialize empty 20-element arrays per line
-  const prod = {};
-  lines.forEach(l => { prod[l.key] = new Array(dayWindow.length).fill(0); });
+// For each stream, compute the 20-day production array.
+// Multi-SKU streams use AVERAGE of the per-day per-SKU qty.
+// Singleton-SKU streams just take the SKU's daily qty directly.
+function shapeProduction(rawRows, streams, dayWindow) {
+  // Build (date_iso → { partUpper → qty }) lookup
+  const byDate = {};
+  dayWindow.forEach(d => { byDate[d.iso] = {}; });
 
-  // Walk every MFG-STK row, bucket into the right (line, day-index)
   rawRows.forEach(row => {
     if (row.tranType !== 'MFG-STK') return;
-    const lineKey = partToLine[row.partNum.toUpperCase()];
-    if (!lineKey) return; // not a tracked part
-    const idx = dateToIdx[row.tranDate];
-    if (idx === undefined) return; // outside our window
-    prod[lineKey][idx] += row.tranQty;
+    if (!byDate[row.tranDate]) return; // outside window
+    const pn = row.partNum.toUpperCase();
+    byDate[row.tranDate][pn] = (byDate[row.tranDate][pn] || 0) + row.tranQty;
   });
 
+  const prod = {};
+  streams.forEach(stream => {
+    prod[stream.key] = dayWindow.map(d => {
+      const dayBucket = byDate[d.iso];
+      let sum = 0;
+      stream.trackedSkus.forEach(sku => {
+        sum += dayBucket[sku] || 0;
+      });
+      // AVERAGE across tracked SKUs (per spec)
+      return stream.trackedSkus.length > 0 ? sum / stream.trackedSkus.length : 0;
+    });
+  });
   return prod;
 }
 
-// Convert raw inventory rows into the FG array shape the dashboard expects.
-// Groups parts by line via prefix matching against the line's main_part name,
-// or via ProdCode → line mapping if you've configured one in Targets.
-function shapeInventoryData(rawRows, lines) {
-  // Build (line key → list of prefix patterns) for matching SKUs to lines
-  const linePatterns = {};
-  lines.forEach(l => {
-    if (!l.part) return;
-    // Use the main_part as a prefix anchor: e.g. "MR1" matches "MR1-*" and "MR1"
-    // For multi-token names like "CROSSFIRE-PRO", match the first token.
-    const root = l.part.split('-')[0].toUpperCase();
-    linePatterns[l.key] = root;
+// For each stream, build an ordered inventory list from inventorySkus.
+function shapeInventory(rawRows, streams) {
+  const byPart = {};
+  rawRows.forEach(row => {
+    byPart[row.partNum.toUpperCase()] = row;
   });
 
-  const fg = [];
-  rawRows.forEach(row => {
-    const pn = row.partNum.toUpperCase();
-    // Find which line this part belongs to
-    let assignedLine = null;
-    for (const [lineKey, root] of Object.entries(linePatterns)) {
-      if (pn === root || pn.startsWith(root + '-') || pn.startsWith(root + 'PRO-')) {
-        assignedLine = lineKey;
-        break;
-      }
-    }
-    if (!assignedLine) return; // SKU doesn't match any tracked line
-
-    // Find the main part for the line — that one gets a demand value
-    const lineCfg = lines.find(l => l.key === assignedLine);
-    const isMainPart = lineCfg && pn === lineCfg.part.toUpperCase();
-    const demand = isMainPart ? lineCfg.target : 0;
-
-    fg.push({
-      sku: row.partNum,
-      desc: row.partDescription || row.partNum,
-      line: assignedLine,
-      qty: row.qty,
-      demand: demand,
+  const out = {};
+  streams.forEach(stream => {
+    out[stream.key] = stream.inventorySkus.map(sku => {
+      const r = byPart[sku];
+      return {
+        sku: sku,
+        desc: r ? r.partDescription : '',
+        qty: r ? r.qty : 0,
+      };
     });
   });
-
-  // Sort within each line: main part first (largest demand), then alpha
-  fg.sort((a, b) => {
-    if (a.line !== b.line) return 0;
-    if (a.demand !== b.demand) return b.demand - a.demand;
-    return a.sku.localeCompare(b.sku);
-  });
-  return fg;
-}
-
-// Build the date window the dashboard uses (20 most recent working days,
-// oldest first). Anchored to today, or to FIXED_ANCHOR for the demo.
-function buildDayWindow(n) {
-  const out = [];
-  const d = USE_FIXED_ANCHOR_DATE ? new Date(FIXED_ANCHOR) : new Date();
-  while (out.length < n) {
-    const day = d.getDay();
-    if (day !== 0 && day !== 6) {
-      out.unshift({
-        iso: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`,
-        label: `${d.getMonth()+1}/${d.getDate()}`,
-        date: new Date(d),
-      });
-    }
-    d.setDate(d.getDate() - 1);
-  }
   return out;
 }
 
-// Fallback line config (used when TARGETS_URL is empty or fetch fails)
-let LINES = [
-  { key: 'apollo', label: 'Apollo',         color: '#ef4444', target: 1.0,  part: 'APOLLO'        },
-  { key: 'titan',  label: 'Titan',          color: '#fb923c', target: 4.0,  part: 'TITAN'         },
-  { key: 'xr',     label: 'Crossfire XR',   color: '#a78bfa', target: 5.0,  part: 'CROSSFIRE-XR'  },
-  { key: 'mr1',    label: 'MR1',            color: '#fbbf24', target: 2.5,  part: 'MR1'           },
-  { key: 'xfpro',  label: 'Crossfire Pro',  color: '#38bdf8', target: 3.0,  part: 'CROSSFIRE-PRO' },
-  { key: 'vulcan', label: 'Vulcan',         color: '#22c55e', target: 1.0,  part: 'VULCAN'        },
-];
+// Convert server stockouts (keyed by ISO day string) to dashboard format
+// (keyed by index into the current 20-day window).
+function reshapeStockouts(serverStockouts, dayWindow, streams) {
+  const isoToIdx = {};
+  dayWindow.forEach((d, i) => { isoToIdx[d.iso] = i; });
 
-// Source-of-truth tracker for the header pill
-let TARGETS_SOURCE = 'fallback'; // → 'live' once Apps Script load succeeds
-let LAST_SYNC_INFO = null;
+  const out = {};
+  streams.forEach(s => { out[s.key] = []; });
 
-// 20 working-day production series (oldest → newest), one per line.
-// FALLBACK DATA: used if Apps Script URL is empty or fetch fails.
-// Replaced with live data on init() success.
-let PROD = {
-  apollo: [0, 1, 1, 1, 0, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
-  titan:  [4, 4, 4, 4, 4, 4, 4, 4, 3, 4, 4, 0, 5, 3, 3, 4, 3, 4, 0, 4],
-  xr:     [3, 1, 2, 3, 1, 1, 2, 2, 2, 2, 3, 2, 4, 1, 3, 6, 3, 13, 10, 1],
-  mr1:    [0, 0, 0, 4, 0, 0, 11, 0, 0, 0, 0, 5, 5, 0, 0, 5, 0, 1, 0, 2],
-  xfpro:  [3, 3, 0, 2, 0, 6, 1, 0, 5, 1, 1, 2, 1, 7, 1, 2, 2, 5, 3, 3],
-  vulcan: [0, 0, 0, 0, 0, 2, 0, 0, 1, 0, 1, 0, 3, 0, 1, 1, 0, 0, 0, 1],
-};
+  Object.keys(serverStockouts).forEach(streamKey => {
+    if (!out[streamKey]) out[streamKey] = [];
+    serverStockouts[streamKey].forEach(iso => {
+      const idx = isoToIdx[iso];
+      if (idx !== undefined) out[streamKey].push(idx);
+    });
+  });
+  return out;
+}
 
-// Stockout / excluded days per line. Each entry is an array of indexes
-// (0–19) into the 20-working-day window — those days are excluded from
-// the moving average and shown grayed out on the chart.
-//
-// Edit these arrays manually when a line was stocked out / down for
-// reasons outside production (no raw materials, planned maintenance, etc).
-// Index 19 is the most recent day; index 0 is the oldest.
-//
-// TODO: persist these in a Sheet tab so they survive page refreshes
-// and are visible across devices.
-const STOCKOUTS = {
-  apollo: [], titan: [], xr: [], mr1: [], xfpro: [], vulcan: [],
-};
+// Convert dashboard STOCKOUTS (index-based) back to server format (ISO-based)
+// for posting.
+function stockoutsForServer(stockouts, dayWindow) {
+  const out = {};
+  Object.keys(stockouts).forEach(key => {
+    out[key] = (stockouts[key] || []).map(idx => dayWindow[idx]?.iso).filter(Boolean);
+  });
+  return out;
+}
 
-// Day window — recomputed by init() so anchored date matches deployment mode
-let DAY_WINDOW = buildDayWindow(20);
-let DAY_LABELS = DAY_WINDOW.map(d => d.label);
+/* ────────────────────────────────────────────────────────── */
+/*  MOVING AVERAGE (skips stockout days)                      */
+/* ────────────────────────────────────────────────────────── */
 
-// Finished goods on-hand inventory. FALLBACK DATA — replaced with
-// live data from Apps Script on init() success. See shapeInventoryData().
-let FG = [
-  // Apollo
-  { sku: 'APOLLO',                desc: 'Apollo CNC Fiber Laser',     line: 'apollo', qty: 0,   demand: 1.0 },
-  { sku: 'APOLLO-CAMERA',         desc: 'Apollo Camera',              line: 'apollo', qty: 0,   demand: 0   },
-  { sku: 'APOLLO-FUME-KIT',       desc: 'Apollo Fume Kit',            line: 'apollo', qty: 0,   demand: 0   },
-  { sku: 'APOLLO-GAS-KIT',        desc: 'Apollo Gas Kit',             line: 'apollo', qty: 0,   demand: 0   },
-  { sku: 'APOLLO-GLASSDOOR',      desc: 'Apollo Glass Door',          line: 'apollo', qty: 0,   demand: 0   },
-  { sku: 'APOLLO-HD-SLATS',       desc: 'Apollo HD Slats',            line: 'apollo', qty: 0,   demand: 0   },
-  { sku: 'APOLLO-TRANSFERBALLS',  desc: 'Apollo Transfer Balls',      line: 'apollo', qty: 0,   demand: 0   },
-  { sku: 'LAS-CONS-BK',           desc: 'Laser Consumables Black',    line: 'apollo', qty: 0,   demand: 0   },
-
-  // Titan
-  { sku: 'TITAN',                 desc: 'Titan',                      line: 'titan',  qty: 17,  demand: 4.0 },
-  { sku: 'TITAN-BACKGUAGE',       desc: 'Titan Backgauge',            line: 'titan',  qty: 10,  demand: 0   },
-  { sku: 'TITAN-ARMS',            desc: 'Titan Arms',                 line: 'titan',  qty: 22,  demand: 0   },
-  { sku: 'TITAN-STAND',           desc: 'Titan Stand',                line: 'titan',  qty: 11,  demand: 0   },
-  { sku: 'TITAN-LIFT-BRACKETS',   desc: 'Titan Lift Brackets',        line: 'titan',  qty: 4,   demand: 0   },
-  { sku: 'TITAN-LEVELINGFEET',    desc: 'Titan Leveling Feet',        line: 'titan',  qty: 0,   demand: 0   },
-
-  // XR
-  { sku: 'XRCRATE-1',             desc: 'XR Crate 1',                 line: 'xr',     qty: 5,   demand: 0   },
-  { sku: 'XRCRATE-2',             desc: 'XR Crate 2',                 line: 'xr',     qty: 6,   demand: 0   },
-  { sku: 'XR-ASSEMBLY',           desc: 'XR Assembly',                line: 'xr',     qty: -1,  demand: 5.0 },
-  { sku: 'XR-REMOTE-ESTOP-KIT',   desc: 'XR Remote E-Stop Kit',       line: 'xr',     qty: 0,   demand: 0   },
-
-  // MR1
-  { sku: 'MR1',                   desc: 'MR1 Base Machine',           line: 'mr1',    qty: 20,  demand: 2.5 },
-  { sku: 'MR1-ASSEMBLY',          desc: 'MR1 Assembly',               line: 'mr1',    qty: 5,   demand: 0   },
-  { sku: 'MR1-ENCLOSURE',         desc: 'MR1 Enclosure',              line: 'mr1',    qty: 29,  demand: 0   },
-  { sku: 'MR1-CONTROL-KIT',       desc: 'MR1 Control Kit',            line: 'mr1',    qty: 31,  demand: 0   },
-  { sku: 'MR1-COLLET-WRENCH-HOLDER', desc: 'Collet Wrench Holder',    line: 'mr1',    qty: 42,  demand: 0   },
-  { sku: 'MR1-EPOXY',             desc: 'MR1 Epoxy',                  line: 'mr1',    qty: 135, demand: 0   },
-  { sku: 'MR1-FEET',              desc: 'MR1 Feet',                   line: 'mr1',    qty: 67,  demand: 0   },
-  { sku: 'MR1-FERROUS-TOOL-BNDL', desc: 'Ferrous Tool Bundle',        line: 'mr1',    qty: 0,   demand: 0   },
-  { sku: 'MR1-FLOOD',             desc: 'MR1 Flood',                  line: 'mr1',    qty: 0,   demand: 0   },
-  { sku: 'MR1-FLOOD-DRAIN',       desc: 'MR1 Flood Drain',            line: 'mr1',    qty: 106, demand: 0   },
-  { sku: 'MR1-FLOOD-RELAY',       desc: 'MR1 Flood Relay',            line: 'mr1',    qty: 12,  demand: 0   },
-  { sku: 'MR1-FLYCUTTER',         desc: 'MR1 Flycutter',              line: 'mr1',    qty: 19,  demand: 0   },
-  { sku: 'MR1-FLYCUTTER-INSERTS', desc: 'Flycutter Inserts',          line: 'mr1',    qty: 0,   demand: 0   },
-  { sku: 'MR1-HANGER',            desc: 'MR1 Hanger',                 line: 'mr1',    qty: 12,  demand: 0   },
-  { sku: 'MR1-INTERIOR-WINDOW',   desc: 'MR1 Interior Window',        line: 'mr1',    qty: 28,  demand: 0   },
-  { sku: 'MR1-LIFT-KIT',          desc: 'MR1 Lift Kit',               line: 'mr1',    qty: 1,   demand: 0   },
-  { sku: 'MR1-NON-FERR-TOOL-BNDL', desc: 'Non-Ferrous Tool Bundle',   line: 'mr1',    qty: 0,   demand: 0   },
-  { sku: 'MR1-PART-STOP-KIT',     desc: 'Part Stop Kit',              line: 'mr1',    qty: 4,   demand: 0   },
-  { sku: 'MR1-PLUGS',             desc: 'MR1 Plugs',                  line: 'mr1',    qty: 9,   demand: 0   },
-  { sku: 'MR1-PROBE-RETROFIT-KIT',desc: 'Probe Retrofit Kit',         line: 'mr1',    qty: 2,   demand: 0   },
-  { sku: 'MR1-PROBE-V2',          desc: 'MR1 Probe V2',               line: 'mr1',    qty: 44,  demand: 0   },
-  { sku: 'MR1-REMOTE-ESTOP-KIT',  desc: 'Remote E-Stop Kit',          line: 'mr1',    qty: 31,  demand: 0   },
-  { sku: 'MR1-SETTER',            desc: 'MR1 Setter',                 line: 'mr1',    qty: 48,  demand: 0   },
-  { sku: 'MR1-SOFT-JAWS',         desc: 'MR1 Soft Jaws',              line: 'mr1',    qty: 6,   demand: 0   },
-  { sku: 'MR1-STAND',             desc: 'MR1 Stand',                  line: 'mr1',    qty: 0,   demand: 0   },
-  { sku: 'MR1-STRAIGHT-SHANK',    desc: 'Straight Shank',             line: 'mr1',    qty: 50,  demand: 0   },
-  { sku: 'MR1-STUB-DRILL-SET',    desc: 'Stub Drill Set',             line: 'mr1',    qty: 10,  demand: 0   },
-  { sku: 'MR1-THREAD-MILL-KIT',   desc: 'Thread Mill Kit',            line: 'mr1',    qty: 0,   demand: 0   },
-  { sku: 'MR1-TOECLAMPS',         desc: 'Toeclamps',                  line: 'mr1',    qty: 0,   demand: 0   },
-  { sku: 'MR1-TOOLSETTER-RISER-KIT', desc: 'Toolsetter Riser Kit',    line: 'mr1',    qty: 57,  demand: 0   },
-  { sku: 'MR1-TOOL-SETTER-TOUCH-PROBE-BUNDLE', desc: 'Touch-Probe Bundle', line: 'mr1', qty: 0, demand: 0  },
-  { sku: 'MR1-TRAM-KIT',          desc: 'MR1 Tram Kit',               line: 'mr1',    qty: 35,  demand: 0   },
-  { sku: 'MR1-VISE-CLAMPSET',     desc: 'Vise Clampset',              line: 'mr1',    qty: 17,  demand: 0   },
-  { sku: 'MR1-WASH-DOWN-KIT',     desc: 'Wash Down Kit',              line: 'mr1',    qty: 5,   demand: 0   },
-
-  // XF / PRO  (Crossfire family)
-  { sku: 'CROSSFIRE',             desc: 'Crossfire',                  line: 'xfpro',  qty: 10,  demand: 3.0 },
-  { sku: 'CROSSFIREPRO-BOX1',     desc: 'Crossfire Pro Box 1',        line: 'xfpro',  qty: 117, demand: 0   },
-  { sku: 'CROSSFIREPRO-BOX2',     desc: 'Crossfire Pro Box 2',        line: 'xfpro',  qty: 54,  demand: 0   },
-  { sku: 'CROSSFIREPRO-BOX3',     desc: 'Crossfire Pro Box 3',        line: 'xfpro',  qty: 158, demand: 0   },
-  { sku: 'ATHC-PRO',              desc: 'Auto Torch Height Control',  line: 'xfpro',  qty: -4,  demand: 0   },
-  { sku: 'MACHINETORCH-MOUNT',    desc: 'Machine Torch Mount',        line: 'xfpro',  qty: 135, demand: 0   },
-  { sku: 'ARCFLAT-BOLTS',         desc: 'Arc Flat Bolts',             line: 'xfpro',  qty: 68,  demand: 0   },
-  { sku: 'MARKER-PEN',            desc: 'Marker Pen',                 line: 'xfpro',  qty: -3,  demand: 0   },
-  { sku: 'SLATS',                 desc: 'Slats',                      line: 'xfpro',  qty: 36,  demand: 0   },
-  { sku: 'WATERTABLE',            desc: 'Water Table',                line: 'xfpro',  qty: 5,   demand: 0   },
-  { sku: 'XLKIT',                 desc: 'XL Kit',                     line: 'xfpro',  qty: 0,   demand: 0   },
-  { sku: 'Z-UPGRADE-GEN1',        desc: 'Z-Axis Upgrade Gen1',        line: 'xfpro',  qty: 2,   demand: 0   },
-  { sku: 'Z-UPGRADE-GEN2',        desc: 'Z-Axis Upgrade Gen2',        line: 'xfpro',  qty: 1,   demand: 0   },
-  { sku: 'GEN2-LIMITS',           desc: 'Gen2 Limits',                line: 'xfpro',  qty: 43,  demand: 0   },
-  { sku: 'LAPTOPSTAND-PRO',       desc: 'Laptop Stand Pro',           line: 'xfpro',  qty: 0,   demand: 0   },
-
-  // Vulcan
-  { sku: 'VULCAN',                desc: 'Vulcan Plasma',              line: 'vulcan', qty: 0,   demand: 1.0 },
-  { sku: 'VULCAN-ASSEMBLY',       desc: 'Vulcan Assembly',            line: 'vulcan', qty: 1,   demand: 0   },
-  { sku: 'VULCAN-CART',           desc: 'Vulcan Cart',                line: 'vulcan', qty: 3,   demand: 0   },
-  { sku: 'VULCAN-ELECTRONICS',    desc: 'Vulcan Electronics',         line: 'vulcan', qty: 7,   demand: 0   },
-  { sku: 'VULCAN-FAN',            desc: 'Vulcan Fan',                 line: 'vulcan', qty: 2,   demand: 0   },
-  { sku: 'VULCAN-LAPTOP-STAND',   desc: 'Vulcan Laptop Stand',        line: 'vulcan', qty: 2,   demand: 0   },
-  { sku: 'VULCAN-LEGS',           desc: 'Vulcan Legs',                line: 'vulcan', qty: 19,  demand: 0   },
-  { sku: 'VULCAN-LIGHT',          desc: 'Vulcan Light',               line: 'vulcan', qty: 6,   demand: 0   },
-  { sku: 'VULCAN-MESH',           desc: 'Vulcan Mesh',                line: 'vulcan', qty: 23,  demand: 0   },
-  { sku: 'VULCAN-SWIVEL',         desc: 'Vulcan Swivel',              line: 'vulcan', qty: 21,  demand: 0   },
-];
-
-// Moving-avg window size (in working days). The most recent N days
-// of the 20-day window count toward the moving average shown on each tile.
-const MA_WINDOW = 10;
-
-// 2-week moving avg, but skip stockout days so they don't drag the
-// average down. Returns null only if every day in window is stocked out.
-function movingAvg(lineKey, n = MA_WINDOW) {
-  const arr = PROD[lineKey];
-  const skips = new Set(STOCKOUTS[lineKey] || []);
-  const startIdx = arr.length - n;
+function movingAvg(streamKey, n = MA_WINDOW) {
+  const arr = PROD[streamKey] || [];
+  const skips = new Set(STOCKOUTS[streamKey] || []);
+  const startIdx = Math.max(0, arr.length - n);
   let sum = 0, count = 0;
   for (let i = startIdx; i < arr.length; i++) {
     if (skips.has(i)) continue;
@@ -880,16 +753,17 @@ function movingAvg(lineKey, n = MA_WINDOW) {
 }
 
 function statusFor(actual, target) {
-  if (actual === null) return { cls: 'status-near', txt: '—' };
+  if (actual === null || target <= 0) return { cls:'status-near', txt:'—' };
   const pct = (actual / target) * 100;
-  if (pct >= 100) return { cls: 'status-on', txt: pct.toFixed(0) + '%' };
-  if (pct >= 95)  return { cls: 'status-near', txt: pct.toFixed(0) + '%' };
-  return { cls: 'status-under', txt: pct.toFixed(0) + '%' };
+  if (pct >= 100) return { cls:'status-on',    txt: pct.toFixed(0) + '%' };
+  if (pct >= 95)  return { cls:'status-near',  txt: pct.toFixed(0) + '%' };
+  return                  { cls:'status-under', txt: pct.toFixed(0) + '%' };
 }
 
 /* ────────────────────────────────────────────────────────── */
 /*  Clock                                                     */
 /* ────────────────────────────────────────────────────────── */
+
 function tick() {
   const d = new Date();
   document.getElementById('clockTime').textContent =
@@ -897,108 +771,95 @@ function tick() {
   document.getElementById('clockDate').textContent =
     d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
 }
-tick(); setInterval(tick, 1000 * 30);
+tick(); setInterval(tick, 30000);
 
 /* ────────────────────────────────────────────────────────── */
-/*  INITIALIZATION (async — loads targets before rendering)   */
+/*  Tile rendering                                            */
 /* ────────────────────────────────────────────────────────── */
-let trendChart = null;
-const visible = new Set();
-const sparkCharts = {};
 
-async function init() {
-  // Try live data first
-  const live = await fetchFromAppsScript();
-  if (live) {
-    // Apply targets if present
-    if (live.targets && live.targets.length) {
-      LINES = live.targets.map(t => ({
-        key: t.key,
-        label: t.label,
-        color: t.color,
-        target: t.target,
-        part: t.part,
-      }));
-      TARGETS_SOURCE = 'live';
-    }
-    // Recompute day window in case we're using today rather than fixed anchor
-    DAY_WINDOW = buildDayWindow(20);
-    DAY_LABELS = DAY_WINDOW.map(d => d.label);
+function renderTiles() {
+  const grid = document.getElementById('streamGrid');
+  grid.innerHTML = '';
 
-    // Shape raw rows into PROD / FG
-    if (live.production && live.production.length) {
-      PROD = shapeProductionData(live.production, LINES, DAY_WINDOW);
-    }
-    if (live.inventory && live.inventory.length) {
-      FG = shapeInventoryData(live.inventory, LINES);
-    }
-    if (live.lastSync) {
-      LAST_SYNC_INFO = live.lastSync;
-    }
-  }
+  TILES.forEach(tile => {
+    // Build per-stream KPI rows (stacked when there are 2+)
+    const kpiRows = tile.streams.map(stream => {
+      const ma = movingAvg(stream.key);
+      const status = statusFor(ma, stream.target);
+      const stockoutCount = (STOCKOUTS[stream.key] || []).filter(i => i >= 20 - MA_WINDOW).length;
+      const maStr = ma === null ? '—' : ma.toFixed(1);
+      const isMulti = tile.streams.length > 1;
 
-  // Repopulate visible set
-  visible.clear();
-  LINES.forEach(l => visible.add(l.key));
+      return `
+        <div class="kpi-line ${isMulti ? 'kpi-line-multi' : ''}" style="--c:${stream.color};">
+          ${isMulti ? `<div class="kpi-stream-label">${stream.label}</div>` : ''}
+          <div class="kpi-num-block">
+            <div class="kpi-actual ${isMulti ? 'kpi-actual-multi' : ''}">${maStr}</div>
+            <div class="kpi-vs">vs <span>${stream.target.toFixed(1)}</span> /day</div>
+          </div>
+          <div class="kpi-status-block">
+            <div class="tile-status ${status.cls}">${status.txt}</div>
+            ${stockoutCount ? `<div class="kpi-excl">${stockoutCount} excl</div>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
 
-  // Update the targets-source pill
-  updateTargetsBadge();
+    // Mixed inventory: concatenate all streams' inventory in order
+    const allInv = [];
+    tile.streams.forEach(stream => {
+      const inv = INVENTORY[stream.key] || [];
+      inv.forEach(item => {
+        // Dedupe by SKU (in case the same SKU appears in both streams' lists)
+        if (!allInv.some(x => x.sku === item.sku)) {
+          allInv.push({ ...item, streamColor: stream.color });
+        }
+      });
+    });
+    const totalUnits = allInv.reduce((a, s) => a + (Number(s.qty) || 0), 0);
+    const invRows = allInv.map(s => {
+      const qty = Number(s.qty) || 0;
+      const cls = qty < 0 ? 'low' : (qty === 0 ? 'warn' : '');
+      return `
+        <div class="inv-row">
+          <div class="inv-sku" title="${s.desc}">
+            <span class="inv-stream-dot" style="background:${s.streamColor};"></span>${s.sku}
+          </div>
+          <div class="inv-qty ${cls}">${qty}</div>
+        </div>
+      `;
+    }).join('') || '<div style="font-size:10px;color:#6b7280;padding:8px 0;">no items</div>';
 
-  // Build all the visual pieces
-  buildLineTiles();
-  LINES.forEach(buildSparkline);
-  buildTrendChart();
-  buildToggles();
-
-  // Schedule recurring refresh if we're live
-  if (live && APPS_SCRIPT_URL && !window.__refreshTimer) {
-    window.__refreshTimer = setInterval(refreshFromAppsScript, REFRESH_MINUTES * 60 * 1000);
-  }
-}
-
-// Pull fresh data and re-render. Called on a timer when live.
-async function refreshFromAppsScript() {
-  const live = await fetchFromAppsScript();
-  if (!live) return; // keep showing what we have rather than blanking out
-
-  if (live.targets && live.targets.length) {
-    LINES = live.targets.map(t => ({
-      key: t.key, label: t.label, color: t.color,
-      target: t.target, part: t.part,
-    }));
-  }
-  DAY_WINDOW = buildDayWindow(20);
-  DAY_LABELS = DAY_WINDOW.map(d => d.label);
-
-  if (live.production) PROD = shapeProductionData(live.production, LINES, DAY_WINDOW);
-  if (live.inventory)  FG   = shapeInventoryData(live.inventory, LINES);
-  if (live.lastSync)   LAST_SYNC_INFO = live.lastSync;
-
-  buildLineTiles();
-  LINES.forEach(buildSparkline);
-  buildTrendChart();
-  updateTargetsBadge();
-}
-
-function updateTargetsBadge() {
-  const badge = document.getElementById('targetsBadge');
-  if (!badge) return;
-  if (TARGETS_SOURCE === 'live') {
-    badge.textContent = '🟢 Live · Sheet';
-    badge.style.color = '#4ade80';
-    badge.style.borderColor = 'rgba(34,197,94,0.35)';
-    badge.style.background = 'rgba(34,197,94,0.12)';
-  } else {
-    badge.textContent = '⚙ Demo · fallback data';
-    badge.style.color = '#fb923c';
-    badge.style.borderColor = 'rgba(251,146,60,0.35)';
-    badge.style.background = 'rgba(251,146,60,0.12)';
-  }
+    const tileEl = document.createElement('div');
+    tileEl.className = 'tile' + (tile.streams.length > 1 ? ' tile-multi' : '');
+    tileEl.style.setProperty('--c', tile.color);
+    tileEl.innerHTML = `
+      <div class="tile-head">
+        <div class="tile-label">${tile.label}</div>
+        ${tile.streams.length > 1 ? `<div class="tile-streams-count">${tile.streams.length} streams</div>` : ''}
+      </div>
+      <div class="kpi-and-spark">
+        <div class="kpi-stack">${kpiRows}</div>
+        <div class="spark-wrap">
+          <canvas data-spark="${tile.key}"></canvas>
+        </div>
+      </div>
+      <div class="tile-inv">
+        <div class="tile-inv-head">
+          <div class="tile-inv-label">On-Hand · ${allInv.length} SKUs</div>
+          <div class="tile-inv-total"><b>${totalUnits}</b>units</div>
+        </div>
+        <div class="inv-list">${invRows}</div>
+      </div>
+    `;
+    grid.appendChild(tileEl);
+  });
 }
 
 /* ────────────────────────────────────────────────────────── */
-/*  Chart.js plugin: shade the moving-avg window               */
+/*  Chart.js plugin: shade the MA window                       */
 /* ────────────────────────────────────────────────────────── */
+
 const maWindowPlugin = {
   id: 'maWindow',
   beforeDatasetsDraw(chart, args, opts) {
@@ -1011,7 +872,6 @@ const maWindowPlugin = {
     ctx.save();
     ctx.fillStyle = opts.fillStyle || 'rgba(96, 165, 250, 0.06)';
     ctx.fillRect(xStart, chartArea.top, xEnd - xStart, chartArea.bottom - chartArea.top);
-    // Left border of MA window
     ctx.strokeStyle = opts.borderStyle || 'rgba(96, 165, 250, 0.35)';
     ctx.setLineDash([3, 3]);
     ctx.lineWidth = 1;
@@ -1025,35 +885,58 @@ const maWindowPlugin = {
 };
 
 /* ────────────────────────────────────────────────────────── */
-/*  Sparklines (one per tile, properly sized)                 */
+/*  Sparklines                                                */
 /* ────────────────────────────────────────────────────────── */
-function buildSparkline(line) {
-  const canvas = document.querySelector(`canvas[data-spark="${line.key}"]`);
+
+function buildSparkline(tile) {
+  const canvas = document.querySelector(`canvas[data-spark="${tile.key}"]`);
   if (!canvas) return;
+  if (sparkCharts[tile.key]) sparkCharts[tile.key].destroy();
 
-  // destroy existing if any (for re-render after stockout/target edits)
-  if (sparkCharts[line.key]) sparkCharts[line.key].destroy();
+  // Sum all streams in this tile per day → single series
+  const summedData = DAY_WINDOW.map((_, i) => {
+    return tile.streams.reduce((acc, s) => acc + ((PROD[s.key] || [])[i] || 0), 0);
+  });
+  const summedTarget = tile.streams.reduce((a, s) => a + s.target, 0);
 
-  const data = PROD[line.key];
-  const skips = new Set(STOCKOUTS[line.key] || []);
-  const dataMin = Math.min(...data);
-  const dataMax = Math.max(...data);
-  const yMin = Math.max(0, Math.min(dataMin, line.target) - 1);
-  const yMax = Math.max(dataMax, line.target) + 1;
+  // Stockouts: a day is "excluded" if ALL streams in the tile have it excluded.
+  // Visually mark days where ANY stream is excluded as well, but with lighter touch.
+  const allSkips = new Set();
+  const anySkips = new Set();
+  if (tile.streams.length === 1) {
+    (STOCKOUTS[tile.streams[0].key] || []).forEach(i => { allSkips.add(i); anySkips.add(i); });
+  } else {
+    DAY_WINDOW.forEach((_, i) => {
+      let allOut = true, anyOut = false;
+      tile.streams.forEach(s => {
+        const out = (STOCKOUTS[s.key] || []).includes(i);
+        if (out) anyOut = true;
+        else allOut = false;
+      });
+      if (allOut) allSkips.add(i);
+      if (anyOut) anySkips.add(i);
+    });
+  }
 
-  // Per-point color: gray for stockout days, line color otherwise
-  const pointColors = data.map((_, i) => skips.has(i) ? '#6b7280' : line.color);
-  const pointRadii  = data.map((_, i) => skips.has(i) ? 2.5 : 0);
+  const dataMin = summedData.length ? Math.min(...summedData) : 0;
+  const dataMax = summedData.length ? Math.max(...summedData) : summedTarget;
+  const yMin = Math.max(0, Math.min(dataMin, summedTarget) - 1);
+  const yMax = Math.max(dataMax, summedTarget) + 1;
+  const labels = DAY_WINDOW.map(d => d.label);
+  const pointColors = summedData.map((_, i) =>
+    allSkips.has(i) ? '#6b7280' : (anySkips.has(i) ? '#9ca3af' : tile.color)
+  );
+  const pointRadii = summedData.map((_, i) => (allSkips.has(i) || anySkips.has(i)) ? 2.5 : 0);
 
-  sparkCharts[line.key] = new Chart(canvas, {
+  sparkCharts[tile.key] = new Chart(canvas, {
     type: 'line',
     data: {
-      labels: DAY_LABELS,
+      labels: labels,
       datasets: [
         {
-          data: data,
-          borderColor: line.color,
-          backgroundColor: line.color + '22',
+          data: summedData,
+          borderColor: tile.color,
+          backgroundColor: tile.color + '22',
           borderWidth: 1.8,
           pointRadius: pointRadii,
           pointBackgroundColor: pointColors,
@@ -1062,8 +945,8 @@ function buildSparkline(line) {
           fill: true,
         },
         {
-          data: Array(data.length).fill(line.target),
-          borderColor: line.color + '88',
+          data: Array(summedData.length).fill(summedTarget),
+          borderColor: tile.color + '88',
           borderWidth: 1,
           borderDash: [3, 3],
           pointRadius: 0,
@@ -1079,38 +962,31 @@ function buildSparkline(line) {
         tooltip: { enabled: false },
         maWindow: { fillStyle: 'rgba(255,255,255,0.05)' }
       },
-      scales: {
-        x: { display: false },
-        y: { display: false, min: yMin, max: yMax }
-      },
-      elements: { line: { borderJoinStyle: 'round' } },
+      scales: { x: { display: false }, y: { display: false, min: yMin, max: yMax } },
       animation: false,
     },
     plugins: [maWindowPlugin]
   });
 }
-// (sparklines built by init())
 
 /* ────────────────────────────────────────────────────────── */
 /*  Combined trend chart                                      */
 /* ────────────────────────────────────────────────────────── */
-// `visible` Set lives at the top — populated in init()
 
 function buildTrendDatasets() {
   const datasets = [];
-  LINES.forEach(line => {
-    if (!visible.has(line.key)) return;
-    const data = PROD[line.key];
-    const skips = new Set(STOCKOUTS[line.key] || []);
-    const pointColors = data.map((_, i) => skips.has(i) ? '#6b7280' : line.color);
+  STREAMS.forEach(stream => {
+    if (!visible.has(stream.key)) return;
+    const data = PROD[stream.key] || [];
+    const skips = new Set(STOCKOUTS[stream.key] || []);
+    const pointColors = data.map((_, i) => skips.has(i) ? '#6b7280' : stream.color);
     const pointRadii  = data.map((_, i) => skips.has(i) ? 4.5 : 2.5);
     const pointStyles = data.map((_, i) => skips.has(i) ? 'rectRot' : 'circle');
 
     datasets.push({
-      label: line.label,
+      label: stream.label,
       data: data,
-      borderColor: line.color,
-      backgroundColor: line.color,
+      borderColor: stream.color,
       pointBackgroundColor: pointColors,
       pointBorderColor: pointColors,
       pointStyle: pointStyles,
@@ -1121,9 +997,9 @@ function buildTrendDatasets() {
       fill: false,
     });
     datasets.push({
-      label: line.label + ' target',
-      data: Array(20).fill(line.target),
-      borderColor: line.color,
+      label: stream.label + ' target',
+      data: Array(20).fill(stream.target),
+      borderColor: stream.color,
       backgroundColor: 'transparent',
       borderWidth: 1.2,
       borderDash: [5, 4],
@@ -1136,247 +1012,282 @@ function buildTrendDatasets() {
 }
 
 function buildTrendChart() {
-  const trendCtx = document.getElementById('trendChart').getContext('2d');
+  const ctx = document.getElementById('trendChart').getContext('2d');
   if (trendChart) trendChart.destroy();
-  trendChart = new Chart(trendCtx, {
-  type: 'line',
-  data: {
-    labels: DAY_LABELS,
-    datasets: buildTrendDatasets(),
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: { mode: 'nearest', axis: 'x', intersect: false },
-    plugins: {
-      legend: { display: false },
-      maWindow: {
-        fillStyle: 'rgba(96, 165, 250, 0.07)',
-        borderStyle: 'rgba(96, 165, 250, 0.35)'
-      },
-      tooltip: {
-        backgroundColor: '#12151a',
-        borderColor: '#2d3340',
-        borderWidth: 1,
-        titleColor: '#fff',
-        bodyColor: '#d1d5db',
-        padding: 10,
-        cornerRadius: 4,
-        filter: (item) => !item.dataset.label.includes('target'),
-        callbacks: {
-          afterLabel: (item) => {
-            const lineKey = LINES.find(l => l.label === item.dataset.label)?.key;
-            if (!lineKey) return '';
-            const skips = STOCKOUTS[lineKey] || [];
-            return skips.includes(item.dataIndex) ? '⚠ stockout · excluded' : '';
+  trendChart = new Chart(ctx, {
+    type: 'line',
+    data: { labels: DAY_WINDOW.map(d => d.label), datasets: buildTrendDatasets() },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'nearest', axis: 'x', intersect: false },
+      plugins: {
+        legend: { display: false },
+        maWindow: { fillStyle: 'rgba(96, 165, 250, 0.07)', borderStyle: 'rgba(96, 165, 250, 0.35)' },
+        tooltip: {
+          backgroundColor: '#12151a',
+          borderColor: '#2d3340',
+          borderWidth: 1,
+          titleColor: '#fff',
+          bodyColor: '#d1d5db',
+          padding: 10,
+          cornerRadius: 4,
+          filter: (item) => !item.dataset.label.includes('target'),
+          callbacks: {
+            label: (item) => `${item.dataset.label}: ${item.parsed.y.toFixed(1)}`,
+            afterLabel: (item) => {
+              const stream = STREAMS.find(s => s.label === item.dataset.label);
+              if (!stream) return '';
+              const skips = STOCKOUTS[stream.key] || [];
+              return skips.includes(item.dataIndex) ? '⚠ stockout · excluded' : '';
+            }
           }
         }
+      },
+      scales: {
+        x: { grid: { color: 'rgba(45,51,64,0.4)' }, ticks: { color: '#9ca3af', font: { size: 10, weight: '600' } } },
+        y: { grid: { color: 'rgba(45,51,64,0.4)' }, ticks: { color: '#9ca3af', font: { size: 10, weight: '600' }, callback: v => v + ' u' }, beginAtZero: true }
       }
     },
-    scales: {
-      x: {
-        grid: { color: 'rgba(45,51,64,0.4)' },
-        ticks: { color: '#9ca3af', font: { size: 10, weight: '600' } }
-      },
-      y: {
-        grid: { color: 'rgba(45,51,64,0.4)' },
-        ticks: {
-          color: '#9ca3af',
-          font: { size: 10, weight: '600' },
-          callback: v => v + ' units'
-        },
-        beginAtZero: true,
-      }
-    }
-  },
-  plugins: [maWindowPlugin]
+    plugins: [maWindowPlugin]
   });
 }
 
 function buildToggles() {
-  const togglesEl = document.getElementById('lineToggles');
-  togglesEl.innerHTML = '';
-  LINES.forEach(line => {
+  const el = document.getElementById('streamToggles');
+  el.innerHTML = '';
+  STREAMS.forEach(stream => {
     const btn = document.createElement('button');
-    btn.className = 'line-toggle active';
-    btn.style.setProperty('--line-color', line.color);
-    btn.innerHTML = `<span class="swatch"></span>${line.label}`;
+    btn.className = 'toggle active';
+    btn.style.setProperty('--c', stream.color);
+    btn.innerHTML = `<span class="swatch"></span>${stream.label}`;
     btn.onclick = () => {
-      if (visible.has(line.key)) {
-        visible.delete(line.key);
-        btn.classList.remove('active');
-        btn.classList.add('muted');
-      } else {
-        visible.add(line.key);
-        btn.classList.add('active');
-        btn.classList.remove('muted');
-      }
+      if (visible.has(stream.key)) { visible.delete(stream.key); btn.classList.remove('active'); btn.classList.add('muted'); }
+      else { visible.add(stream.key); btn.classList.add('active'); btn.classList.remove('muted'); }
       trendChart.data.datasets = buildTrendDatasets();
       trendChart.update();
     };
-    togglesEl.appendChild(btn);
+    el.appendChild(btn);
   });
 }
 
 /* ────────────────────────────────────────────────────────── */
-/*  Stockout management modal                                 */
+/*  Stockout modal                                            */
 /* ────────────────────────────────────────────────────────── */
-const stockoutModal = document.getElementById('stockoutModal');
-const stockoutGrid = document.getElementById('stockoutGrid');
 
-function buildStockoutGrid() {
-  stockoutGrid.innerHTML = '';
-  LINES.forEach(line => {
-    const skips = new Set(STOCKOUTS[line.key] || []);
-    const days = DAY_LABELS.map((label, i) => {
+const modal = document.getElementById('stockoutModal');
+const modalGrid = document.getElementById('stockoutGrid');
+const saveStatus = document.getElementById('saveStatus');
+let modalDirty = false;
+
+function buildModal() {
+  modalGrid.innerHTML = '';
+  STREAMS.forEach(stream => {
+    const skips = new Set(STOCKOUTS[stream.key] || []);
+    const cells = DAY_WINDOW.map((d, i) => {
       const isOut = skips.has(i);
+      const qty = (PROD[stream.key] || [])[i] || 0;
       return `<button
-        class="stockout-day ${isOut ? 'excluded' : ''}"
-        data-line="${line.key}"
-        data-idx="${i}"
-        title="${label} — qty: ${PROD[line.key][i]}">
-        <span>${label}</span>
-      </button>`;
+        class="day-cell ${isOut ? 'excluded' : ''}"
+        data-stream="${stream.key}" data-idx="${i}"
+        title="${d.label} — qty: ${qty.toFixed(1)}"><span>${d.label}</span></button>`;
     }).join('');
+
     const row = document.createElement('div');
-    row.className = 'stockout-line-row';
-    row.style.setProperty('--line-color', line.color);
+    row.className = 'stockout-row';
+    row.style.setProperty('--c', stream.color);
     row.innerHTML = `
-      <div class="stockout-line-label">${line.label}</div>
-      <div class="stockout-days">${days}</div>
+      <div class="stockout-label">${stream.label}</div>
+      <div class="stockout-days">${cells}</div>
     `;
-    stockoutGrid.appendChild(row);
+    modalGrid.appendChild(row);
   });
 
-  // wire up day toggles
-  stockoutGrid.querySelectorAll('.stockout-day').forEach(btn => {
+  modalGrid.querySelectorAll('.day-cell').forEach(btn => {
     btn.onclick = () => {
-      const lineKey = btn.dataset.line;
+      const key = btn.dataset.stream;
       const idx = parseInt(btn.dataset.idx);
-      const arr = STOCKOUTS[lineKey] || (STOCKOUTS[lineKey] = []);
+      const arr = STOCKOUTS[key] || (STOCKOUTS[key] = []);
       const pos = arr.indexOf(idx);
-      if (pos >= 0) arr.splice(pos, 1);
-      else arr.push(idx);
+      if (pos >= 0) arr.splice(pos, 1); else arr.push(idx);
       btn.classList.toggle('excluded');
+      modalDirty = true;
+      setSaveStatus('unsaved · click Done to save');
     };
   });
 }
 
-document.getElementById('manageStockoutsBtn').onclick = () => {
-  buildStockoutGrid();
-  stockoutModal.classList.add('open');
+function setSaveStatus(text, kind) {
+  saveStatus.textContent = text;
+  saveStatus.className = 'save-status' + (kind ? ' ' + kind : '');
+}
+
+document.getElementById('manageBtn').onclick = () => {
+  modalDirty = false;
+  setSaveStatus(APPS_SCRIPT_URL ? 'no changes' : 'demo mode — changes won\'t persist');
+  buildModal();
+  modal.classList.add('open');
 };
 
-document.getElementById('closeStockoutsBtn').onclick = () => {
-  applyStockoutChanges();
-  stockoutModal.classList.remove('open');
-};
-
-document.getElementById('saveStockoutsBtn').onclick = () => {
-  applyStockoutChanges();
-  stockoutModal.classList.remove('open');
-};
-
-document.getElementById('clearAllStockoutsBtn').onclick = () => {
-  LINES.forEach(line => STOCKOUTS[line.key] = []);
-  buildStockoutGrid();
-};
-
-stockoutModal.onclick = (e) => {
-  if (e.target === stockoutModal) {
-    applyStockoutChanges();
-    stockoutModal.classList.remove('open');
+async function closeModalAndSave() {
+  if (modalDirty && APPS_SCRIPT_URL) {
+    setSaveStatus('saving…');
+    const result = await postStockouts(stockoutsForServer(STOCKOUTS, DAY_WINDOW));
+    if (!result.success) {
+      setSaveStatus('save failed: ' + (result.error || 'unknown'), 'err');
+      return; // keep modal open so user can retry
+    }
+    setSaveStatus('saved', 'ok');
   }
-};
+  modal.classList.remove('open');
+  rerenderAll();
+}
 
-// Re-render everything with updated stockout state
-function applyStockoutChanges() {
-  buildLineTiles();
-  LINES.forEach(buildSparkline);
+document.getElementById('doneBtn').onclick = closeModalAndSave;
+document.getElementById('closeBtn').onclick = closeModalAndSave;
+document.getElementById('clearBtn').onclick = () => {
+  STREAMS.forEach(s => STOCKOUTS[s.key] = []);
+  buildModal();
+  modalDirty = true;
+  setSaveStatus('unsaved · click Done to save');
+};
+modal.onclick = (e) => { if (e.target === modal) closeModalAndSave(); };
+
+/* ────────────────────────────────────────────────────────── */
+/*  Status pill                                               */
+/* ────────────────────────────────────────────────────────── */
+
+function updateDataPill() {
+  const pill = document.getElementById('dataPill');
+  const banner = document.getElementById('banner');
+  if (TARGETS_SOURCE === 'live') {
+    pill.innerHTML = '<span class="dot"></span>LIVE · EPICOR';
+    pill.style.color = '#4ade80';
+    pill.style.borderColor = 'rgba(34,197,94,0.35)';
+    pill.style.background = 'rgba(34,197,94,0.12)';
+    banner.style.display = 'none';
+  } else {
+    pill.textContent = '⚙ DEMO · FALLBACK';
+    pill.style.color = '#fb923c';
+    pill.style.borderColor = 'rgba(251,146,60,0.35)';
+    pill.style.background = 'rgba(251,146,60,0.12)';
+  }
+}
+
+/* ────────────────────────────────────────────────────────── */
+/*  Render orchestration                                      */
+/* ────────────────────────────────────────────────────────── */
+
+function rerenderAll() {
+  rebuildTiles();
+  renderTiles();
+  TILES.forEach(buildSparkline);
   buildTrendChart();
 }
 
-// Wrap original tile-building loop in a function so we can re-call it
-function buildLineTiles() {
-  const grid = document.getElementById('lineGrid');
-  grid.innerHTML = '';
-  LINES.forEach(line => {
-    const ma = movingAvg(line.key, MA_WINDOW);
-    const status = statusFor(ma, line.target);
-    const skus = FG.filter(s => s.line === line.key);
-    const hasQty = skus.some(s => s.qty !== null && s.qty !== undefined);
-    const totalUnits = skus.reduce((a, s) => a + (s.qty || 0), 0);
-    const stockoutCount = (STOCKOUTS[line.key] || []).filter(i => i >= 20 - MA_WINDOW).length;
-    const maDisplay = ma === null ? '—' : ma.toFixed(1);
+/* ────────────────────────────────────────────────────────── */
+/*  INIT                                                      */
+/* ────────────────────────────────────────────────────────── */
 
-    const skuRows = skus.map(s => {
-      if (s.qty === null || s.qty === undefined) {
-        return `
-          <div class="inv-row">
-            <div class="inv-sku">${s.sku}<small>${s.desc}</small></div>
-            <div class="inv-qty" style="color:#6b7280;">—</div>
-            <div class="inv-dos" style="color:#6b7280;">awaiting feed</div>
-          </div>
-        `;
-      }
-      // No demand defined → component / sub-assembly, just show qty
-      if (!s.demand || s.demand <= 0) {
-        const qtyCls = s.qty < 0 ? 'low' : (s.qty === 0 ? 'warn' : '');
-        return `
-          <div class="inv-row">
-            <div class="inv-sku">${s.sku}<small>${s.desc}</small></div>
-            <div class="inv-qty ${qtyCls}">${s.qty}</div>
-            <div class="inv-dos" style="color:#6b7280;">—</div>
-          </div>
-        `;
-      }
-      const dos = s.qty / s.demand;
-      const dosCls = dos < 3 ? 'low' : (dos < 5 ? 'warn' : '');
-      return `
-        <div class="inv-row">
-          <div class="inv-sku">${s.sku}<small>${s.desc}</small></div>
-          <div class="inv-qty ${dosCls}">${s.qty}</div>
-          <div class="inv-dos ${dosCls}">${dos.toFixed(1)} days</div>
-        </div>
-      `;
-    }).join('');
+async function init() {
+  DAY_WINDOW = buildDayWindow(20);
 
-    const tile = document.createElement('div');
-    tile.className = `line-tile line-${line.key}`;
-    tile.innerHTML = `
-      <div class="tile-head">
-        <div class="tile-line">${line.label}</div>
-        <div class="tile-status ${status.cls}">${status.txt} of target</div>
-      </div>
-      <div class="tile-kpi-row">
-        <div class="tile-kpi-num">
-          <div class="tile-kpi-num-row">
-            <div class="tile-actual">${maDisplay}</div>
-            <div class="tile-vs">vs <span>${line.target.toFixed(1)}</span></div>
-          </div>
-          <div class="tile-kpi-sub">${MA_WINDOW}-day avg · units/day${stockoutCount ? ` · <span style="color:#fb923c;">${stockoutCount} excluded</span>` : ''}</div>
-        </div>
-        <div class="tile-spark-wrap">
-          <canvas data-spark="${line.key}"></canvas>
-        </div>
-      </div>
-      <div class="tile-inv">
-        <div class="tile-inv-head">
-          <div class="tile-inv-label">On-Hand Inventory</div>
-          <div class="tile-inv-total">${hasQty ? `<b>${totalUnits}</b>units · ${skus.length} SKUs` : `<span style="color:#fb923c;">awaiting feed</span>`}</div>
-        </div>
-        <div class="tile-inv-list tile-inv-scroll">
-          ${skuRows || '<div style="font-size:11px;color:#6b7280;padding:8px 0;">No SKUs assigned</div>'}
-        </div>
-      </div>
-    `;
-    grid.appendChild(tile);
+  // Try live data
+  const live = await fetchFromAppsScript();
+
+  if (live) {
+    if (live.targets && live.targets.length) {
+      STREAMS = live.targets.map(t => ({
+        key: t.key,
+        tileKey: t.tileKey || t.key,
+        label: t.label,
+        color: t.color,
+        target: t.target,
+        trackedSkus: t.trackedSkus || [],
+        inventorySkus: t.inventorySkus || [],
+      }));
+      TARGETS_SOURCE = 'live';
+    }
+    if (live.production && live.production.length) {
+      PROD = shapeProduction(live.production, STREAMS, DAY_WINDOW);
+    } else {
+      buildFallbackProd();
+    }
+    if (live.inventory && live.inventory.length) {
+      INVENTORY = shapeInventory(live.inventory, STREAMS);
+    } else {
+      buildFallbackInv();
+    }
+    if (live.stockouts) {
+      STOCKOUTS = reshapeStockouts(live.stockouts, DAY_WINDOW, STREAMS);
+    }
+    if (live.lastSync) LAST_SYNC = live.lastSync;
+  } else {
+    // Fallback demo data
+    buildFallbackProd();
+    buildFallbackInv();
+    STREAMS.forEach(s => STOCKOUTS[s.key] = []);
+  }
+
+  // Populate visible set
+  visible.clear();
+  STREAMS.forEach(s => visible.add(s.key));
+
+  updateDataPill();
+  rerenderAll();
+  buildToggles();
+
+  // Refresh loop
+  if (live && APPS_SCRIPT_URL && !window.__refreshTimer) {
+    window.__refreshTimer = setInterval(refreshLive, REFRESH_MINUTES * 60 * 1000);
+  }
+}
+
+async function refreshLive() {
+  const live = await fetchFromAppsScript();
+  if (!live) return;
+  if (live.targets && live.targets.length) {
+    STREAMS = live.targets.map(t => ({
+      key: t.key, tileKey: t.tileKey || t.key,
+      label: t.label, color: t.color, target: t.target,
+      trackedSkus: t.trackedSkus || [], inventorySkus: t.inventorySkus || [],
+    }));
+  }
+  DAY_WINDOW = buildDayWindow(20);
+  if (live.production) PROD = shapeProduction(live.production, STREAMS, DAY_WINDOW);
+  if (live.inventory)  INVENTORY = shapeInventory(live.inventory, STREAMS);
+  if (live.stockouts)  STOCKOUTS = reshapeStockouts(live.stockouts, DAY_WINDOW, STREAMS);
+  if (live.lastSync)   LAST_SYNC = live.lastSync;
+  rerenderAll();
+}
+
+/* Demo fallback data — used when no APPS_SCRIPT_URL is set */
+function buildFallbackProd() {
+  // Fake but plausible 20-day series for each stream
+  const seed = (k, n) => {
+    let h = 0;
+    for (let i = 0; i < k.length; i++) h = (h * 31 + k.charCodeAt(i)) >>> 0;
+    const out = [];
+    for (let i = 0; i < n; i++) {
+      h = (h * 1103515245 + 12345) >>> 0;
+      out.push(((h >> 16) & 0x7fff) / 0x7fff);
+    }
+    return out;
+  };
+  STREAMS.forEach(stream => {
+    const noise = seed(stream.key, 20);
+    PROD[stream.key] = noise.map(r => Math.round(stream.target * (0.4 + r * 1.2)));
+  });
+}
+function buildFallbackInv() {
+  STREAMS.forEach(stream => {
+    INVENTORY[stream.key] = stream.inventorySkus.map((sku, i) => ({
+      sku: sku, desc: '', qty: Math.round(5 + (i + 1) * 3),
+    }));
   });
 }
 
-// Kick everything off
 init();
-
 </script>
 </body>
 </html>
