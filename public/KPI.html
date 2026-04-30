@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Production KPI Board</title>
+<title>Langmuir · Production KPI</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -58,6 +58,22 @@
   }
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 
+  .refresh-btn {
+    background: transparent;
+    border: 1px solid #2d3340;
+    color: #9ca3af;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding: 0;
+  }
+  .refresh-btn:hover { color: #fff; border-color: #4b5563; }
+  .refresh-btn:disabled { opacity: 0.5; cursor: wait; }
+  .refresh-btn.spinning svg { animation: spin 1s linear infinite; }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
   /* ── Banner ─────────────────────────────────────────────── */
   .banner {
     background: linear-gradient(90deg, rgba(251,146,60,0.12), rgba(251,146,60,0.04));
@@ -88,6 +104,35 @@
     content: '';
     flex: 1; height: 1px;
     background: linear-gradient(90deg, #2d3340 0%, transparent 100%);
+  }
+
+  /* ── Empty state (disconnected / no data) ───────────────── */
+  .empty-state {
+    grid-column: 1 / -1;
+    background: #232831;
+    border: 1px solid #2d3340;
+    border-radius: 6px;
+    padding: 60px 20px;
+    text-align: center;
+    color: #9ca3af;
+  }
+  .empty-state-icon {
+    font-size: 36px;
+    color: #f87171;
+    margin-bottom: 12px;
+  }
+  .empty-state-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+  }
+  .empty-state-sub {
+    font-size: 12px;
+    line-height: 1.5;
+    max-width: 400px;
+    margin: 0 auto;
   }
 
   /* ── Tile grid (3x2 = 6 tiles) ──────────────────────────── */
@@ -461,7 +506,14 @@
     <div class="board-title">Finished Goods · <strong>All Streams</strong></div>
   </div>
   <div class="header-right">
-    <div id="dataPill" class="pill" style="border-color:rgba(251,146,60,0.35);background:rgba(251,146,60,0.12);color:#fb923c;">Loading…</div>
+    <div id="dataPill" class="pill" style="color:#9ca3af;border-color:rgba(156,163,175,0.35);background:rgba(156,163,175,0.12);">Loading…</div>
+    <button id="refreshBtn" class="refresh-btn" title="Refresh now" aria-label="Refresh now">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="23 4 23 10 17 10"></polyline>
+        <polyline points="1 20 1 14 7 14"></polyline>
+        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+      </svg>
+    </button>
     <div class="clock">
       <div class="clock-time" id="clockTime">—</div>
       <div class="clock-date" id="clockDate">—</div>
@@ -469,7 +521,7 @@
   </div>
 </div>
 
-<div class="banner" id="banner">v0.3 — 6 tiles, dual-stream KPIs · paste APPS_SCRIPT_URL into the script to switch from demo to live data</div>
+<div class="banner" id="banner" style="display:none;"></div>
 
 <div class="main">
   <div class="section-label">10-Day Moving Average · By Line</div>
@@ -520,41 +572,29 @@
 /*  CONFIG                                                    */
 /* ────────────────────────────────────────────────────────── */
 
-// Apps Script web app URL. Empty = demo mode with fallback data.
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzGCXk-chVbb-fHlJFMg9nbym-vBs00aJ_5XqU1SMPpy2u-1xY35aumEbOoMBJsPAzT/exec";
+// Apps Script web app URL. Required — dashboard shows a disconnected
+// state if this is empty or unreachable.
+const APPS_SCRIPT_URL = "";
 
 // Refresh cadence (minutes). 30 catches the 6am sync within ~30 min.
 const REFRESH_MINUTES = 30;
 
-// MA window size, in working days
+// Moving average window size, in working days
 const MA_WINDOW = 10;
 
-// Anchor the 20-day window to a fixed date (true = demo with snapshot data)
-// or use today (false = live deployment).
-const USE_FIXED_ANCHOR_DATE = false;
-const FIXED_ANCHOR = new Date(2026, 3, 28); // April 28, 2026
-
 /* ────────────────────────────────────────────────────────── */
-/*  FALLBACK DATA (used when APPS_SCRIPT_URL is empty)        */
+/*  STATE                                                     */
 /* ────────────────────────────────────────────────────────── */
 
-// Streams: each row = one measurable production target.
-// Streams with the same `tileKey` render together as one tile.
-let STREAMS = [
-  { key:'apollo', tileKey:'apollo', label:'Apollo',       color:'#ef4444', target:1.0, trackedSkus:['APOLLO'],          inventorySkus:['APOLLO','APOLLO-CAMERA','APOLLO-FUME-KIT','APOLLO-GAS-KIT'] },
-  { key:'titan',  tileKey:'titan',  label:'Titan',        color:'#fb923c', target:4.0, trackedSkus:['TITAN'],           inventorySkus:['TITAN','TITAN-BACKGUAGE','TITAN-ARMS','TITAN-STAND'] },
-  { key:'xr',     tileKey:'xr',     label:'XR',           color:'#a78bfa', target:4.0, trackedSkus:['XRCRATE-1','XRCRATE-2'], inventorySkus:['XRCRATE-1','XRCRATE-2'] },
-  { key:'xr-asm', tileKey:'xr',     label:'XR Asm',       color:'#c4b5fd', target:0.6, trackedSkus:['XR-ASSEMBLY'],     inventorySkus:['XR-ASSEMBLY','XR-REMOTE-ESTOP-KIT'] },
-  { key:'mr1',    tileKey:'mr1',    label:'MR1',          color:'#fbbf24', target:2.5, trackedSkus:['MR1'],             inventorySkus:['MR1','MR1-ASSEMBLY','MR1-ENCLOSURE','MR1-CONTROL-KIT'] },
-  { key:'xf',     tileKey:'xf-pro', label:'Crossfire',    color:'#38bdf8', target:1.0, trackedSkus:['CROSSFIRE'],       inventorySkus:['CROSSFIRE','SLATS','WATERTABLE','XLKIT'] },
-  { key:'xf-pro', tileKey:'xf-pro', label:'XF/PRO',       color:'#06b6d4', target:1.0, trackedSkus:['CROSSFIREPRO-BOX1','CROSSFIREPRO-BOX2','CROSSFIREPRO-BOX3'], inventorySkus:['CROSSFIREPRO-BOX1','CROSSFIREPRO-BOX2','CROSSFIREPRO-BOX3','ATHC-PRO','MACHINETORCH-MOUNT'] },
-  { key:'vulcan', tileKey:'vulcan', label:'Vulcan',       color:'#22c55e', target:1.0, trackedSkus:['VULCAN'],          inventorySkus:['VULCAN','VULCAN-ASSEMBLY','VULCAN-CART','VULCAN-LEGS'] },
-];
+// Stream definitions. Empty until first fetch from Apps Script.
+// Each: { key, tileKey, label, color, target, trackedSkus, inventorySkus }
+let STREAMS = [];
 
-// Tile metadata. Lazily derived from STREAMS — order/labels/colors come
-// from the first stream encountered for each tileKey, but we override
-// the label for grouped tiles so the header reads cleanly.
-let TILES = []; // [{ key, label, color, streams: [stream, ...] }]
+// Tile metadata derived from STREAMS by rebuildTiles().
+// Streams sharing a tileKey render together as one tile.
+let TILES = [];
+
+// Tile labels for grouped tiles (override the first stream's label).
 const TILE_LABELS = {
   'xr':     'XR',         // XR + XR Asm
   'xf-pro': 'XF / PRO',   // Crossfire + XF/PRO
@@ -568,7 +608,7 @@ function rebuildTiles() {
       map.set(key, {
         key: key,
         label: TILE_LABELS[key] || s.label,
-        color: s.color,            // primary color = first stream's color
+        color: s.color,
         streams: [],
       });
     }
@@ -590,7 +630,6 @@ let INVENTORY = {};
 let STOCKOUTS = {};
 
 // State trackers
-let TARGETS_SOURCE = 'fallback';
 let LAST_SYNC = null;
 let DAY_WINDOW = [];   // [{ iso, label, date }, ...]
 const visible = new Set();
@@ -603,7 +642,7 @@ const sparkCharts = {};
 
 function buildDayWindow(n) {
   const out = [];
-  const d = USE_FIXED_ANCHOR_DATE ? new Date(FIXED_ANCHOR) : new Date();
+  const d = new Date();
   while (out.length < n) {
     const day = d.getDay();
     if (day !== 0 && day !== 6) {
@@ -634,7 +673,7 @@ async function fetchFromAppsScript() {
 }
 
 async function postStockouts(payload) {
-  if (!APPS_SCRIPT_URL) return { success: false, error: 'No backend configured (demo mode)' };
+  if (!APPS_SCRIPT_URL) return { success: false, error: 'No backend URL configured' };
   try {
     const resp = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
@@ -780,6 +819,20 @@ tick(); setInterval(tick, 30000);
 function renderTiles() {
   const grid = document.getElementById('streamGrid');
   grid.innerHTML = '';
+
+  if (!TILES.length) {
+    grid.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">⚠</div>
+        <div class="empty-state-title">No data available</div>
+        <div class="empty-state-sub">
+          Could not load from the backend. Click the refresh button to retry,
+          or check that the Apps Script web app is deployed.
+        </div>
+      </div>
+    `;
+    return;
+  }
 
   TILES.forEach(tile => {
     // Build per-stream KPI rows (stacked when there are 2+)
@@ -1124,7 +1177,7 @@ function setSaveStatus(text, kind) {
 
 document.getElementById('manageBtn').onclick = () => {
   modalDirty = false;
-  setSaveStatus(APPS_SCRIPT_URL ? 'no changes' : 'demo mode — changes won\'t persist');
+  setSaveStatus(APPS_SCRIPT_URL ? 'no changes' : 'no backend configured');
   buildModal();
   modal.classList.add('open');
 };
@@ -1154,23 +1207,69 @@ document.getElementById('clearBtn').onclick = () => {
 modal.onclick = (e) => { if (e.target === modal) closeModalAndSave(); };
 
 /* ────────────────────────────────────────────────────────── */
-/*  Status pill                                               */
+/*  Refresh button                                            */
 /* ────────────────────────────────────────────────────────── */
 
-function updateDataPill() {
+document.getElementById('refreshBtn').onclick = () => refreshLive({ manual: true });
+
+/* ────────────────────────────────────────────────────────── */
+/*  Connection / refresh state                                */
+/* ────────────────────────────────────────────────────────── */
+
+function formatRelativeTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  const diffMs = Date.now() - d.getTime();
+  const min = Math.round(diffMs / 60000);
+  if (min < 1)   return 'just now';
+  if (min < 60)  return min + 'm ago';
+  const hr = Math.round(min / 60);
+  if (hr < 24)   return hr + 'h ago';
+  return Math.round(hr / 24) + 'd ago';
+}
+
+function setConnectionState(state) {
   const pill = document.getElementById('dataPill');
-  const banner = document.getElementById('banner');
-  if (TARGETS_SOURCE === 'live') {
-    pill.innerHTML = '<span class="dot"></span>LIVE · EPICOR';
-    pill.style.color = '#4ade80';
-    pill.style.borderColor = 'rgba(34,197,94,0.35)';
-    pill.style.background = 'rgba(34,197,94,0.12)';
-    banner.style.display = 'none';
-  } else {
-    pill.textContent = '⚙ DEMO · FALLBACK';
-    pill.style.color = '#fb923c';
-    pill.style.borderColor = 'rgba(251,146,60,0.35)';
-    pill.style.background = 'rgba(251,146,60,0.12)';
+  const refreshBtn = document.getElementById('refreshBtn');
+
+  // Drive button enabled/disabled
+  if (refreshBtn) {
+    refreshBtn.disabled = (state === 'loading' || state === 'refreshing');
+    refreshBtn.classList.toggle('spinning', state === 'loading' || state === 'refreshing');
+  }
+
+  let lastTs = '';
+  if (LAST_SYNC && LAST_SYNC.lastSync) {
+    const rel = formatRelativeTime(LAST_SYNC.lastSync);
+    if (rel) lastTs = ' · ' + rel;
+  }
+
+  switch (state) {
+    case 'loading':
+      pill.innerHTML = '<span class="dot"></span>LOADING';
+      pill.style.color = '#9ca3af';
+      pill.style.borderColor = 'rgba(156,163,175,0.35)';
+      pill.style.background = 'rgba(156,163,175,0.12)';
+      break;
+    case 'refreshing':
+      pill.innerHTML = '<span class="dot"></span>REFRESHING';
+      pill.style.color = '#60a5fa';
+      pill.style.borderColor = 'rgba(96,165,250,0.35)';
+      pill.style.background = 'rgba(96,165,250,0.12)';
+      break;
+    case 'live':
+      pill.innerHTML = '<span class="dot"></span>LIVE' + lastTs;
+      pill.style.color = '#4ade80';
+      pill.style.borderColor = 'rgba(34,197,94,0.35)';
+      pill.style.background = 'rgba(34,197,94,0.12)';
+      break;
+    case 'disconnected':
+      pill.innerHTML = '⚠ DISCONNECTED' + (lastTs ? ' · last' + lastTs : '');
+      pill.style.color = '#f87171';
+      pill.style.borderColor = 'rgba(239,68,68,0.4)';
+      pill.style.background = 'rgba(239,68,68,0.12)';
+      break;
   }
 }
 
@@ -1189,102 +1288,70 @@ function rerenderAll() {
 /*  INIT                                                      */
 /* ────────────────────────────────────────────────────────── */
 
-async function init() {
-  DAY_WINDOW = buildDayWindow(20);
+// Apply a live payload to all global state. Returns true on success.
+function applyLiveData(live) {
+  if (!live) return false;
 
-  // Try live data
-  const live = await fetchFromAppsScript();
-
-  if (live) {
-    if (live.targets && live.targets.length) {
-      STREAMS = live.targets.map(t => ({
-        key: t.key,
-        tileKey: t.tileKey || t.key,
-        label: t.label,
-        color: t.color,
-        target: t.target,
-        trackedSkus: t.trackedSkus || [],
-        inventorySkus: t.inventorySkus || [],
-      }));
-      TARGETS_SOURCE = 'live';
-    }
-    if (live.production && live.production.length) {
-      PROD = shapeProduction(live.production, STREAMS, DAY_WINDOW);
-    } else {
-      buildFallbackProd();
-    }
-    if (live.inventory && live.inventory.length) {
-      INVENTORY = shapeInventory(live.inventory, STREAMS);
-    } else {
-      buildFallbackInv();
-    }
-    if (live.stockouts) {
-      STOCKOUTS = reshapeStockouts(live.stockouts, DAY_WINDOW, STREAMS);
-    }
-    if (live.lastSync) LAST_SYNC = live.lastSync;
-  } else {
-    // Fallback demo data
-    buildFallbackProd();
-    buildFallbackInv();
-    STREAMS.forEach(s => STOCKOUTS[s.key] = []);
+  if (live.targets && live.targets.length) {
+    STREAMS = live.targets.map(t => ({
+      key: t.key,
+      tileKey: t.tileKey || t.key,
+      label: t.label,
+      color: t.color,
+      target: t.target,
+      trackedSkus: t.trackedSkus || [],
+      inventorySkus: t.inventorySkus || [],
+    }));
   }
 
-  // Populate visible set
+  DAY_WINDOW = buildDayWindow(20);
+
+  PROD      = live.production ? shapeProduction(live.production, STREAMS, DAY_WINDOW) : {};
+  INVENTORY = live.inventory  ? shapeInventory(live.inventory, STREAMS)               : {};
+  STOCKOUTS = live.stockouts  ? reshapeStockouts(live.stockouts, DAY_WINDOW, STREAMS) : {};
+
+  if (live.lastSync) LAST_SYNC = live.lastSync;
+
+  // Make sure every stream has a stockouts entry so iterations don't trip
+  STREAMS.forEach(s => { if (!STOCKOUTS[s.key]) STOCKOUTS[s.key] = []; });
+
+  // Populate visible set for trend chart toggles
   visible.clear();
   STREAMS.forEach(s => visible.add(s.key));
 
-  updateDataPill();
-  rerenderAll();
-  buildToggles();
-
-  // Refresh loop
-  if (live && APPS_SCRIPT_URL && !window.__refreshTimer) {
-    window.__refreshTimer = setInterval(refreshLive, REFRESH_MINUTES * 60 * 1000);
-  }
+  return true;
 }
 
-async function refreshLive() {
+async function init() {
+  DAY_WINDOW = buildDayWindow(20);  // always build so chart axes have labels
+  setConnectionState('loading');
   const live = await fetchFromAppsScript();
-  if (!live) return;
-  if (live.targets && live.targets.length) {
-    STREAMS = live.targets.map(t => ({
-      key: t.key, tileKey: t.tileKey || t.key,
-      label: t.label, color: t.color, target: t.target,
-      trackedSkus: t.trackedSkus || [], inventorySkus: t.inventorySkus || [],
-    }));
+  if (applyLiveData(live)) {
+    setConnectionState('live');
+    rerenderAll();
+    buildToggles();
+    if (APPS_SCRIPT_URL && !window.__refreshTimer) {
+      window.__refreshTimer = setInterval(refreshLive, REFRESH_MINUTES * 60 * 1000);
+    }
+  } else {
+    setConnectionState('disconnected');
+    rerenderAll();          // shows empty-state message
+    buildToggles();         // empty toggle bar
   }
-  DAY_WINDOW = buildDayWindow(20);
-  if (live.production) PROD = shapeProduction(live.production, STREAMS, DAY_WINDOW);
-  if (live.inventory)  INVENTORY = shapeInventory(live.inventory, STREAMS);
-  if (live.stockouts)  STOCKOUTS = reshapeStockouts(live.stockouts, DAY_WINDOW, STREAMS);
-  if (live.lastSync)   LAST_SYNC = live.lastSync;
-  rerenderAll();
 }
 
-/* Demo fallback data — used when no APPS_SCRIPT_URL is set */
-function buildFallbackProd() {
-  // Fake but plausible 20-day series for each stream
-  const seed = (k, n) => {
-    let h = 0;
-    for (let i = 0; i < k.length; i++) h = (h * 31 + k.charCodeAt(i)) >>> 0;
-    const out = [];
-    for (let i = 0; i < n; i++) {
-      h = (h * 1103515245 + 12345) >>> 0;
-      out.push(((h >> 16) & 0x7fff) / 0x7fff);
-    }
-    return out;
-  };
-  STREAMS.forEach(stream => {
-    const noise = seed(stream.key, 20);
-    PROD[stream.key] = noise.map(r => Math.round(stream.target * (0.4 + r * 1.2)));
-  });
-}
-function buildFallbackInv() {
-  STREAMS.forEach(stream => {
-    INVENTORY[stream.key] = stream.inventorySkus.map((sku, i) => ({
-      sku: sku, desc: '', qty: Math.round(5 + (i + 1) * 3),
-    }));
-  });
+async function refreshLive(opts) {
+  const isManual = opts && opts.manual;
+  if (isManual) setConnectionState('refreshing');
+  const live = await fetchFromAppsScript();
+  if (applyLiveData(live)) {
+    setConnectionState('live');
+    rerenderAll();
+  } else if (isManual) {
+    setConnectionState('disconnected');
+  }
+  // Auto-refresh failures don't change the visible state — keep showing
+  // last-good data so a transient blip doesn't blank the wall display.
 }
 
 init();
