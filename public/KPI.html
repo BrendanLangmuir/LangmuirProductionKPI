@@ -642,7 +642,15 @@ const sparkCharts = {};
 
 function buildDayWindow(n) {
   const out = [];
+  // Anchor to the last completed working day, not today. Today's
+  // production transactions aren't posted until end of shift, so
+  // including today would drag the MA down throughout the day.
   const d = new Date();
+  d.setDate(d.getDate() - 1);
+  // If yesterday was a weekend, walk further back until we land on Fri.
+  while (d.getDay() === 0 || d.getDay() === 6) {
+    d.setDate(d.getDate() - 1);
+  }
   while (out.length < n) {
     const day = d.getDay();
     if (day !== 0 && day !== 6) {
