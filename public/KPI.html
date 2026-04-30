@@ -594,7 +594,7 @@
 //   - targets    : line config from the Targets tab in the Sheet
 //
 // If empty, dashboard runs with hardcoded fallback data (demo mode).
-const APPS_SCRIPT_URL = ""; // ← paste deployment URL here
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzGCXk-chVbb-fHlJFMg9nbym-vBs00aJ_5XqU1SMPpy2u-1xY35aumEbOoMBJsPAzT/exec"; // ← paste deployment URL here
 
 // How often to re-fetch from the Apps Script. The data refreshes once
 // daily at 6am, so anything more frequent than ~15 min is wasted work.
@@ -605,7 +605,7 @@ const REFRESH_MINUTES = 30;
 // Whether to anchor the working-day window to a fixed date (true, for the
 // demo with snapshot data) or use today (false, for live deployment).
 // When wired to the Apps Script, set this to false.
-const USE_FIXED_ANCHOR_DATE = true;
+const USE_FIXED_ANCHOR_DATE = false;
 const FIXED_ANCHOR = new Date(2026, 3, 28); // April 28, 2026 — the data we have
 
 // ─── DATA LOADING ──────────────────────────────────────────────
